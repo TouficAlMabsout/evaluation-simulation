@@ -127,7 +127,7 @@ for convo in displayed:
     if st.session_state.open_view_id == convo["conversation_id"]:
         st.subheader(f"Past Analysis - {convo['conversation_id']}")
         if convo["results"]:
-            for res in convo["results"]:
+            for res in sorted(convo["results"], key=lambda r: r["time"], reverse=True):
                 st.markdown(f"- **Time**: {res['time']}  \n"
                             f"- **Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n"
                             f"- **Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)

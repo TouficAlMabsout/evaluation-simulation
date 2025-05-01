@@ -4,6 +4,8 @@ from langsmith import Client
 import json
 from dotenv import load_dotenv
 import os
+import re
+from fastapi import Query
 
 load_dotenv()
 
@@ -75,6 +77,190 @@ def list_prompts():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch prompts: {str(e)}")
+
+@app.get("/prompt-variables")
+def get_prompt_variables(prompt_id: str = Query(...)):
+    try:
+        client = Client(api_key=os.getenv("LANGSMITH_API_KEY"))
+        prompt = client.pull_prompt(prompt_id)
+
+        # Remove fields you handle internally
+        ignored = {"chat_history", "question"}
+        user_vars = sorted(var for var in prompt.input_variables if var not in ignored)
+
+        return {"variables": user_vars}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to extract variables: {str(e)}")
+    try:
+        client = Client(api_key=os.getenv("LANGSMITH_API_KEY"))
+        prompt = client.pull_prompt(prompt_id)
+
+        # Fallback if template parsing fails
+        variable_set = set()
+
+        # Safely extract from prompt messages (system templates only)
+        for m in prompt.prompt.messages:
+            try:
+                if hasattr(m, "prompt") and hasattr(m.prompt, "template"):
+                    template = m.prompt.template
+                    found = re.findall(r"{(\w+)}", template)
+                    variable_set.update(found)
+            except Exception:
+                continue
+
+        # Remove built-in system fields
+        blacklist = {"chat_history", "question"}
+        clean_vars = sorted(var for var in variable_set if var not in blacklist)
+
+        return {"variables": clean_vars}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to extract variables: {str(e)}")
+
+    try:
+        client = Client(api_key=LANGSMITH_API_KEY)
+        prompt = client.pull_prompt(prompt_id)
+        print(prompt)
+        template_str = prompt.prompt.template
+
+        # Extract variables like {ExpiryDate}
+        variables = re.findall(r"{(\w+)}", template_str)
+        return {"variables": variables}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to extract variables: {str(e)}")
+
+    try:
+        client = Client(api_key=LANGSMITH_API_KEY)
+        offset = 0
+        limit = 100
+        results = []
+
+        while True:
+            response = client.list_prompts(limit=limit, offset=offset, is_public=False)
+            if not response.repos:
+                break
+
+            for id, prompts in response:
+                if id == "repos":
+                    for prompt_stub in prompts:
+                        try:
+                            full_prompt = client.pull_prompt(prompt_stub.full_name)
+                            template_str = full_prompt.prompt.template
+
+                            # Extract variables using regex
+                            variables = re.findall(r"{(\w+)}", template_str)
+
+                            results.append({
+                                "id": prompt_stub.full_name,
+                                "project": prompt_stub.repo_handle or "unknown",
+                                "input_variables": variables
+                            })
+
+                        except Exception as e:
+                            # Skip this prompt if template is invalid
+                            print(f"Skipping prompt {prompt_stub.full_name}: {e}")
+                            continue
+
+            offset += limit
+
+        return results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch prompt details: {str(e)}")
+
+    try:
+        client = Client(api_key=LANGSMITH_API_KEY)
+        offset = 0
+        limit = 100
+        results = []
+
+        while True:
+            response = client.list_prompts(limit=limit, offset=offset, is_public=False)
+            if not response.repos:
+                break
+
+            for id, prompts in response:
+                if id == "repos":
+                    for prompt_stub in prompts:
+                        full_prompt = client.pull_prompt(prompt_stub.full_name)
+
+                        # Extract variables from prompt template using regex
+                        try:
+                            template_str = full_prompt.prompt.template
+                            variables = re.findall(r"{(\w+)}", template_str)
+                        except Exception:
+                            variables = []
+
+                        results.append({
+                            "id": prompt_stub.full_name,
+                            "project": prompt_stub.repo_handle or "unknown",
+                            "input_variables": variables
+                        })
+
+            offset += limit
+
+        return results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch prompt details: {str(e)}")
+
+    try:
+        client = Client(api_key=LANGSMITH_API_KEY)
+        offset = 0
+        limit = 100
+        results = []
+
+        while True:
+            response = client.list_prompts(limit=limit, offset=offset, is_public=False)
+            if not response.repos:
+                break
+
+            for id, prompts in response:
+                if id == "repos":
+                    for prompt_stub in prompts:
+                        # Pull full prompt object to access .input_variables
+                        full_prompt = client.pull_prompt(prompt_stub.full_name)
+                        results.append({
+                            "id": prompt_stub.full_name,
+                            "project": prompt_stub.repo_handle or "unknown",
+                            "input_variables": full_prompt.input_variables
+                        })
+
+            offset += limit
+
+        return results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch prompt details: {str(e)}")
+
+    try:
+        client = Client(api_key=LANGSMITH_API_KEY)
+        offset = 0
+        limit = 100
+        results = []
+
+        while True:
+            response = client.list_prompts(limit=limit, offset=offset, is_public=False)
+            if not response.repos:
+                break
+
+            for id, p in response:
+                if id == "repos":
+                    for prompt in p:
+                        results.append({
+                            "id": prompt.full_name,
+                            "name": prompt.name,
+                            "project": prompt.repo_handle or "unknown",
+                            "input_variables": prompt.input_variables
+                        })
+            offset += limit
+
+        return results
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch prompt details: {str(e)}")
 
     try:
         client = Client(api_key=LANGSMITH_API_KEY)

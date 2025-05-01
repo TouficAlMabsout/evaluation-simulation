@@ -52,6 +52,17 @@ def fetch_prompt_list_from_api():
         st.error(f"Error fetching prompts: {e}")
         return []
 
+def get_prompt_variables(prompt_id):
+    try:
+        res = requests.get("http://localhost:8000/prompt-variables", params={"prompt_id": prompt_id})
+        if res.status_code == 200:
+            return res.json().get("variables", [])
+        else:
+            return []
+    except Exception as e:
+        st.error(f"Failed to fetch prompt variables: {e}")
+        return []
+
 from math import ceil
 
 st.title("Evaluation Dashboard")
@@ -127,16 +138,16 @@ for convo in displayed:
     
     if st.session_state.open_analyze_id == convo["conversation_id"]:
         st.markdown("---")
-        st.subheader(f"New Analysis – {convo['conversation_id']}")
+        st.subheader(f"New Analysis - {convo['conversation_id']}")
 
         # Fetch prompt list
         all_prompts = fetch_prompt_list_from_api()
 
         selected_prompt = st.selectbox(
-        "Select Prompt (type to search)",
-        options=all_prompts,
-        key=f"prompt_select_{convo['conversation_id']}"
-    )
+            "Select Prompt (type to search)",
+            options=[""] + all_prompts,  # blank placeholder
+            key=f"prompt_select_{convo['conversation_id']}"
+        )
 
 
 
@@ -145,6 +156,20 @@ for convo in displayed:
             "claude-3-sonnet-20240229",
             "claude-3-opus-20240229"
         ], key=f"model_select_{convo['conversation_id']}")
+
+        variable_values = {}
+
+        # Only fetch variables when user selects a valid prompt (not the blank one)
+        if selected_prompt and selected_prompt.strip() != "":
+            input_variables = get_prompt_variables(selected_prompt)
+
+            if input_variables:
+                st.markdown("**Optional Variables:**")
+                for var in input_variables:
+                    val = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
+                    variable_values[var] = val if val.strip() else "missing"
+
+
 
         st.button("Run Analysis", key=f"run_{convo['conversation_id']}")
 

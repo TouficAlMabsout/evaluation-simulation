@@ -1,0 +1,43 @@
+{
+  "conversation_id": "1234",
+  "username": "bob",
+  "date_of_report": "2025-05-01 12:30",
+  "content": [ 
+    { "role": "human", "content": "hello" }, 
+    { "role": "ai", "content": "" }, 
+    { "role": "human", "content": "I want a visa" }, 
+    { "role": "ai", "content": "" } 
+  ], 
+  "results": [
+    {
+      "time": "2025-05-01 12:33",
+      "prompt_id": "mv_retention_testing",
+      "model": "claude-3-sonnet-20240229",
+      "variables": {
+        "ExpiryDate": "2025-05-01",
+        "StartingDate": "2025-06-01"
+      },
+      "output": [ 
+        { "role": "human", "content": "hello" }, 
+        { "role": "ai", "content": "hello again!" }, 
+        { "role": "human", "content": "I want a visa" }, 
+        { "role": "ai", "content": "yes give me a moment please" } 
+      ]
+    },
+    {
+      "time": "2025-05-01 12:35",
+      "prompt_id": "mv_email_testing",
+      "model": "claude-3-sonnet-20240229",
+      "variables": {
+        "ExpiryDate": "2025-04-01",
+        "Email": "xx@gmail.com"
+      },
+      "output": [ 
+        { "role": "human", "content": "hello" }, 
+        { "role": "ai", "content": "hello again sir!" }, 
+        { "role": "human", "content": "I want a visa" }, 
+        { "role": "ai", "content": "yes give me a moment please, I will come back!" } 
+      ]
+    }
+  ]
+}

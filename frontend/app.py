@@ -1,12 +1,15 @@
+# app.py
 import streamlit as st
 import requests
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+from math import ceil
+
 # Load environment variables
 load_dotenv()
 
-# Initialize mock session data if not already set
+# Init session state
 if "conversations" not in st.session_state:
     st.session_state.conversations = [
         {
@@ -37,41 +40,40 @@ if "conversations" not in st.session_state:
 
 if "open_analyze_id" not in st.session_state:
     st.session_state.open_analyze_id = None
+if "open_view_id" not in st.session_state:
+    st.session_state.open_view_id = None
+if "prompt_cache" not in st.session_state:
+    st.session_state.prompt_cache = {}
 
-
+# API fetch functions
 @st.cache_data(show_spinner=False)
-def fetch_prompt_list_from_api():
+def fetch_prompt_list():
     try:
         res = requests.get("http://localhost:8000/prompts")
         if res.status_code == 200:
             return res.json()
         else:
-            st.warning("Could not fetch prompts from server.")
             return []
-    except Exception as e:
-        st.error(f"Error fetching prompts: {e}")
+    except:
         return []
 
-def get_prompt_variables(prompt_id):
+def fetch_prompt_variables(prompt_id):
+    if prompt_id in st.session_state.prompt_cache:
+        return st.session_state.prompt_cache[prompt_id]
     try:
         res = requests.get("http://localhost:8000/prompt-variables", params={"prompt_id": prompt_id})
         if res.status_code == 200:
-            return res.json().get("variables", [])
+            vars = res.json().get("variables", [])
+            st.session_state.prompt_cache[prompt_id] = vars
+            return vars
         else:
             return []
-    except Exception as e:
-        st.error(f"Failed to fetch prompt variables: {e}")
+    except:
         return []
 
-from math import ceil
-
+# UI
 st.title("Evaluation Dashboard")
-
 conversations = st.session_state.conversations
-
-if "open_analysis_id" not in st.session_state:
-    st.session_state.open_analysis_id = None
-
 per_page = 5
 total_pages = ceil(len(conversations) / per_page)
 
@@ -85,17 +87,14 @@ with col1:
 with col3:
     if st.button("Next ▶") and st.session_state.current_page < total_pages:
         st.session_state.current_page += 1
+col2.markdown(f"<div style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
 
-col2.markdown(f"<div style='text-align: center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
-
-page = st.session_state.current_page
-
-
-start = (page - 1) * per_page
+start = (st.session_state.current_page - 1) * per_page
 end = start + per_page
 displayed = conversations[start:end]
-header_cols = st.columns([2, 2, 2, 2, 2])
 
+st.divider()
+header_cols = st.columns([2, 2, 2, 2, 2])
 header_cols[0].markdown("**Username**")
 header_cols[1].markdown("**Date & Time**")
 header_cols[2].markdown("**Conversation ID**")
@@ -108,135 +107,77 @@ for convo in displayed:
     cols[1].write(convo["date_of_report"])
     cols[2].write(convo["conversation_id"])
 
-    # View Past Analysis
+    # View Button Logic
     if cols[3].button("View", key=f"view_{convo['conversation_id']}"):
-        if st.session_state.open_analysis_id == convo["conversation_id"]:
-            st.session_state.open_analysis_id = None  # Toggle off
+        if st.session_state.open_view_id == convo["conversation_id"]:
+            st.session_state.open_view_id = None  # Toggle off
         else:
-            st.session_state.open_analysis_id = convo["conversation_id"]
+            st.session_state.open_view_id = convo["conversation_id"]
+            st.session_state.open_analyze_id = None
 
-    if st.session_state.open_analysis_id == convo["conversation_id"]:
+    # Analyze Button Logic
+    if cols[4].button("Analyze", key=f"analyze_{convo['conversation_id']}"):
+        if st.session_state.open_analyze_id == convo["conversation_id"]:
+            st.session_state.open_analyze_id = None
+        else:
+            st.session_state.open_analyze_id = convo["conversation_id"]
+            st.session_state.open_view_id = None
+
+    # Render View Panel
+    if st.session_state.open_view_id == convo["conversation_id"]:
         st.subheader(f"Past Analysis - {convo['conversation_id']}")
         if convo["results"]:
             for res in convo["results"]:
-                st.markdown(f"""
-                - **Time**: {res['time']}  
-                - **Prompt ID**: <span style="color:#6cc644;">{res['prompt_id']}</span>  
-                - **Model**: <span style="color:#4fa3d1;">{res['model']}</span>  
-                - **Variables:**  
-                """, unsafe_allow_html=True)
-
+                st.markdown(f"- **Time**: {res['time']}  \n"
+                            f"- **Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n"
+                            f"- **Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)
                 for k, v in res["variables"].items():
-                    st.markdown(f"""
-                    <div style="margin-left: 20px;">
-                        <strong style="color:#f0f0f0;">{k}:</strong> <span style="color:#ccc;">{v}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
+                    st.markdown(f"<div style='margin-left:20px;'><strong style='color:#f0f0f0'>{k}:</strong> <span style='color:#ccc'>{v}</span></div>", unsafe_allow_html=True)
                 for m in res["output"]:
-                    role = m["role"].capitalize()
-                    if m["role"] == "human":
-                        bubble_color = "#2a2d32"
-                    else:
-                        bubble_color = "#1e4023"
-
-                    st.markdown(f"""
-                    <div style="background-color: {bubble_color}; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; color: #f0f0f0;">
-                        <strong>{role}:</strong><br>{m["content"]}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-
+                    bubble_color = "#2a2d32" if m["role"] == "human" else "#1e4023"
+                    st.markdown(f"<div style='background-color:{bubble_color}; padding:10px 15px; border-radius:10px; margin:8px 0; color:#f0f0f0;'><strong>{m['role'].capitalize()}:</strong><br>{m['content']}</div>", unsafe_allow_html=True)
                 st.markdown("---")
         else:
-            st.info("No analysis has been performed yet.")
+            st.info("No past analysis found.")
 
-
-    if cols[4].button("Analyze", key=f"analyze_{convo['conversation_id']}"):
-        if st.session_state.open_analyze_id == convo["conversation_id"]:
-            st.session_state.open_analyze_id = None  # Toggle off
-        else:
-            st.session_state.open_analyze_id = convo["conversation_id"]
-    
+    # Render Analyze Panel
     if st.session_state.open_analyze_id == convo["conversation_id"]:
-        st.markdown("---")
         st.subheader(f"New Analysis - {convo['conversation_id']}")
-
-        # Fetch prompt list
-        all_prompts = fetch_prompt_list_from_api()
-
-        selected_prompt = st.selectbox(
-            "Select Prompt (type to search)",
-            options=[""] + all_prompts,  # blank placeholder
-            key=f"prompt_select_{convo['conversation_id']}"
-        )
-
-
-
-        selected_model = st.selectbox("Select Claude Model", [
-            "claude-3-haiku-20240307",
-            "claude-3-sonnet-20240229",
-            "claude-3-opus-20240229"
-        ], key=f"model_select_{convo['conversation_id']}")
-
+        prompt_list = fetch_prompt_list()
+        selected_prompt = st.selectbox("Select Prompt", [""] + prompt_list, key=f"prompt_{convo['conversation_id']}")
+        selected_model = st.selectbox("Select Model", ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"], key=f"model_{convo['conversation_id']}")
+        
         variable_values = {}
-
-        # Only fetch variables when user selects a valid prompt (not the blank one)
-        if selected_prompt and selected_prompt.strip() != "":
-            input_variables = get_prompt_variables(selected_prompt)
-
+        if selected_prompt.strip():
+            input_variables = fetch_prompt_variables(selected_prompt)
             if input_variables:
                 st.markdown("**Optional Variables:**")
                 for var in input_variables:
-                    val = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
-                    variable_values[var] = val if val.strip() else "missing"
-
-
+                    value = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
+                    variable_values[var] = value if value.strip() else "missing"
 
         if st.button("Run Analysis", key=f"run_{convo['conversation_id']}"):
             try:
                 json_payload = json.dumps(convo["content"])
-                files = {
-                    "file": ("chat.json", json_payload, "application/json")
-                }
-
-                # Serialize the variables dictionary
-                variables_json = json.dumps(variable_values)
-
+                files = {"file": ("chat.json", json_payload, "application/json")}
                 data = {
                     "prompt_id": selected_prompt,
                     "model_name": selected_model,
-                    "variables_json": variables_json
+                    "variables_json": json.dumps(variable_values)
                 }
-
                 res = requests.post("http://localhost:8000/simulate", files=files, data=data)
-
                 if res.status_code == 200:
-                    ai_output = res.json()
+                    output = res.json()
                     convo["results"].append({
-                        "time": datetime.now().strftime("%Y-%m-%d %H:%M"), 
+                        "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
                         "prompt_id": selected_prompt,
                         "model": selected_model,
                         "variables": variable_values,
-                        "output": ai_output
+                        "output": output
                     })
-                    # Show the new result immediately
-                    st.markdown("### Latest AI Analysis")
-                    for m in ai_output:
-                        role = m["role"].capitalize()
-                        bubble_color = "#2a2d32" if m["role"] == "human" else "#1e4023"
-                        st.markdown(f"""
-                        <div style="background-color: {bubble_color}; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; color: #f0f0f0;">
-                            <strong>{role}:</strong><br>{m["content"]}
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                    st.success("Analysis completed and stored.")
-                    st.session_state.open_analysis_id = convo["conversation_id"]
+                    st.success("Analysis completed.")
+                    st.session_state.open_analyze_id = None
                 else:
-                    st.error(f"Simulation failed: {res.status_code} - {res.text}")
+                    st.error(f"Error {res.status_code}: {res.text}")
             except Exception as e:
-                st.error(f"Unexpected error during simulation: {e}")
-
-
-
+                st.error(f"Error during simulation: {e}")

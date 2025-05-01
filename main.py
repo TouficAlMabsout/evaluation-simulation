@@ -25,30 +25,51 @@ app.add_middleware(
 )
 
 @app.post("/simulate")
-async def simulate(file: UploadFile = None, prompt_id: str = Form(None), model_name: str = Form(None)):
+async def simulate(
+    file: UploadFile = None,
+    prompt_id: str = Form(...),
+    model_name: str = Form(...),
+    variables_json: str = Form("{}", description="User-provided variables as JSON string")
+):
     if file is None:
         raise HTTPException(status_code=400, detail="No file uploaded. Please upload a chat JSON file.")
     if not file.filename.endswith(".json"):
         raise HTTPException(status_code=400, detail="Only .json files are accepted. Please upload a valid JSON file.")
-    if prompt_id is None or prompt_id.strip() == "":
+    if prompt_id.strip() == "":
         raise HTTPException(status_code=400, detail="Prompt ID is missing. Please enter a LangSmith prompt ID.")
-    if model_name is None or model_name.strip() == "":
+    if model_name.strip() == "":
         raise HTTPException(status_code=400, detail="Claude model is not selected.")
 
+    # Load uploaded JSON content
     try:
         content = await file.read()
         chat = json.loads(content)
-        if not isinstance(chat, list) or not all(isinstance(m, dict) and "role" in m and m["role"] in ["human", "ai"] and "content" in m and isinstance(m["content"], str) and m["content"].strip() != "" for m in chat):
+        if not isinstance(chat, list) or not all(
+            isinstance(m, dict)
+            and "role" in m
+            and m["role"] in ["human", "ai"]
+            and "content" in m
+            and isinstance(m["content"], str)
+            for m in chat
+        ):
+
             raise HTTPException(
                 status_code=400,
                 detail="Uploaded JSON must be a list of messages with 'role' ('human' or 'ai') and non-empty 'content'."
             )
-
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Uploaded file is not valid JSON. Error: {str(e)}")
 
+    # Parse dynamic variables from frontend
     try:
-        result = simulate_chat(chat, prompt_id, model_name, LANGSMITH_API_KEY, ANTHROPIC_API_KEY)
+        user_vars = json.loads(variables_json)
+        assert isinstance(user_vars, dict)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid variables JSON: {str(e)}")
+
+    # Simulate conversation
+    try:
+        result = simulate_chat(chat, prompt_id, model_name, LANGSMITH_API_KEY, ANTHROPIC_API_KEY, user_vars)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")

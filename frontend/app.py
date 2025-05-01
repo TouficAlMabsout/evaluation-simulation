@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from dotenv import load_dotenv
 import json
-
+from datetime import datetime
 # Load environment variables
 load_dotenv()
 
@@ -119,12 +119,34 @@ for convo in displayed:
         st.subheader(f"Past Analysis - {convo['conversation_id']}")
         if convo["results"]:
             for res in convo["results"]:
-                st.markdown(f"- **Time**: {res['time']}  \n"
-                            f"**Prompt ID**: `{res['prompt_id']}`  \n"
-                            f"**Model**: `{res['model']}`  \n"
-                            f"**Variables**: `{json.dumps(res['variables'])}`")
+                st.markdown(f"""
+                - **Time**: {res['time']}  
+                - **Prompt ID**: <span style="color:#6cc644;">{res['prompt_id']}</span>  
+                - **Model**: <span style="color:#4fa3d1;">{res['model']}</span>  
+                - **Variables:**  
+                """, unsafe_allow_html=True)
+
+                for k, v in res["variables"].items():
+                    st.markdown(f"""
+                    <div style="margin-left: 20px;">
+                        <strong style="color:#f0f0f0;">{k}:</strong> <span style="color:#ccc;">{v}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
                 for m in res["output"]:
-                    st.markdown(f"**{m['role']}**: {m['content']}")
+                    role = m["role"].capitalize()
+                    if m["role"] == "human":
+                        bubble_color = "#2a2d32"
+                    else:
+                        bubble_color = "#1e4023"
+
+                    st.markdown(f"""
+                    <div style="background-color: {bubble_color}; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; color: #f0f0f0;">
+                        <strong>{role}:</strong><br>{m["content"]}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+
                 st.markdown("---")
         else:
             st.info("No analysis has been performed yet.")
@@ -171,6 +193,50 @@ for convo in displayed:
 
 
 
-        st.button("Run Analysis", key=f"run_{convo['conversation_id']}")
+        if st.button("Run Analysis", key=f"run_{convo['conversation_id']}"):
+            try:
+                json_payload = json.dumps(convo["content"])
+                files = {
+                    "file": ("chat.json", json_payload, "application/json")
+                }
+
+                # Serialize the variables dictionary
+                variables_json = json.dumps(variable_values)
+
+                data = {
+                    "prompt_id": selected_prompt,
+                    "model_name": selected_model,
+                    "variables_json": variables_json
+                }
+
+                res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+
+                if res.status_code == 200:
+                    ai_output = res.json()
+                    convo["results"].append({
+                        "time": datetime.now().strftime("%Y-%m-%d %H:%M"), 
+                        "prompt_id": selected_prompt,
+                        "model": selected_model,
+                        "variables": variable_values,
+                        "output": ai_output
+                    })
+                    # Show the new result immediately
+                    st.markdown("### Latest AI Analysis")
+                    for m in ai_output:
+                        role = m["role"].capitalize()
+                        bubble_color = "#2a2d32" if m["role"] == "human" else "#1e4023"
+                        st.markdown(f"""
+                        <div style="background-color: {bubble_color}; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; color: #f0f0f0;">
+                            <strong>{role}:</strong><br>{m["content"]}
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    st.success("Analysis completed and stored.")
+                    st.session_state.open_analysis_id = convo["conversation_id"]
+                else:
+                    st.error(f"Simulation failed: {res.status_code} - {res.text}")
+            except Exception as e:
+                st.error(f"Unexpected error during simulation: {e}")
+
 
 

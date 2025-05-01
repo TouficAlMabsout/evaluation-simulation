@@ -1,10 +1,9 @@
 from langsmith import Client
 from langchain_anthropic import ChatAnthropic
 
-def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, anthropic_api_key):
+def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, anthropic_api_key, extra_vars=None):
     client = Client(api_key=langsmith_api_key)
-    prompt_id = "mv_retention_testing"
-    prompt = client.pull_prompt(prompt_id)  # THIS WILL NOW WORK
+    prompt = client.pull_prompt(prompt_id)
 
     llm = ChatAnthropic(
         model=model_name,
@@ -12,23 +11,24 @@ def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, anthropic_
     )
 
     chain = prompt | llm
-
     history = []
     new_responses = []
 
     for msg in messages:
         if msg["role"] == "human":
             history.append({"role": "human", "content": msg["content"]})
-            result = chain.invoke({
+
+            inputs = {
                 "chat_history": history,
-                "question": msg["content"],
-                "VisaExpiryDate": "missing",
-                "ContractExpiryDate": "missing",
-                "MaidBasicSalary": "missing"
-            })
+                "question": msg["content"]
+            }
+
+            # Merge dynamic variables
+            if extra_vars:
+                inputs.update(extra_vars)
+
+            result = chain.invoke(inputs)
             history.append({"role": "ai", "content": result.content})
             new_responses.append({"role": "ai", "content": result.content})
-        else:
-            continue
 
     return history

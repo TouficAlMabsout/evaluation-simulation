@@ -5,38 +5,16 @@ from dotenv import load_dotenv
 import json
 from datetime import datetime
 from math import ceil
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from data_store import load_conversations, save_conversations
 
 # Load environment variables
 load_dotenv()
 
 # Init session state
 if "conversations" not in st.session_state:
-    st.session_state.conversations = [
-        {
-            "conversation_id": "1234",
-            "username": "bob",
-            "date_of_report": "2025-05-01 12:30",
-            "content": [
-                {"role": "human", "content": "hello"},
-                {"role": "ai", "content": ""},
-                {"role": "human", "content": "I want a visa"},
-                {"role": "ai", "content": ""}
-            ],
-            "results": []
-        },
-        {
-            "conversation_id": "5678",
-            "username": "alice",
-            "date_of_report": "2025-05-01 14:00",
-            "content": [
-                {"role": "human", "content": "hi"},
-                {"role": "ai", "content": ""},
-                {"role": "human", "content": "can you help me with something?"},
-                {"role": "ai", "content": ""}
-            ],
-            "results": []
-        }
-    ]
+    st.session_state.conversations = load_conversations()
 
 if "open_analyze_id" not in st.session_state:
     st.session_state.open_analyze_id = None
@@ -132,7 +110,20 @@ for convo in displayed:
                             f"- **Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n"
                             f"- **Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)
                 for k, v in res["variables"].items():
-                    st.markdown(f"<div style='margin-left:20px;'><strong style='color:#f0f0f0'>{k}:</strong> <span style='color:#ccc'>{v}</span></div>", unsafe_allow_html=True)
+                    if v == "missing":
+                        st.markdown(f"""
+                        <div style="margin-left: 20px;">
+                            <strong style="color:#f0f0f0;">{k}:</strong> 
+                            <span style="color:#ff4d4d;"><em>(missing)</em></span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div style="margin-left: 20px;">
+                            <strong style="color:#f0f0f0;">{k}:</strong> 
+                            <span style="color:#ccc;">{v}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
                 for m in res["output"]:
                     bubble_color = "#2a2d32" if m["role"] == "human" else "#1e4023"
                     st.markdown(f"<div style='background-color:{bubble_color}; padding:10px 15px; border-radius:10px; margin:8px 0; color:#f0f0f0;'><strong>{m['role'].capitalize()}:</strong><br>{m['content']}</div>", unsafe_allow_html=True)
@@ -175,6 +166,7 @@ for convo in displayed:
                         "variables": variable_values,
                         "output": output
                     })
+                    save_conversations(st.session_state.conversations)
                     st.success("Analysis completed.")
                     st.session_state.open_analyze_id = None
                 else:

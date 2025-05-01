@@ -35,6 +35,9 @@ if "conversations" not in st.session_state:
         }
     ]
 
+if "open_analyze_id" not in st.session_state:
+    st.session_state.open_analyze_id = None
+
 
 @st.cache_data(show_spinner=False)
 def fetch_prompt_list_from_api():
@@ -116,6 +119,33 @@ for convo in displayed:
             st.info("No analysis has been performed yet.")
 
 
-    # Placeholder for Analyze button
     if cols[4].button("Analyze", key=f"analyze_{convo['conversation_id']}"):
-        st.warning("Analyze feature coming next step...")
+        if st.session_state.open_analyze_id == convo["conversation_id"]:
+            st.session_state.open_analyze_id = None  # Toggle off
+        else:
+            st.session_state.open_analyze_id = convo["conversation_id"]
+    
+    if st.session_state.open_analyze_id == convo["conversation_id"]:
+        st.markdown("---")
+        st.subheader(f"New Analysis – {convo['conversation_id']}")
+
+        # Fetch prompt list
+        all_prompts = fetch_prompt_list_from_api()
+
+        selected_prompt = st.selectbox(
+        "Select Prompt (type to search)",
+        options=all_prompts,
+        key=f"prompt_select_{convo['conversation_id']}"
+    )
+
+
+
+        selected_model = st.selectbox("Select Claude Model", [
+            "claude-3-haiku-20240307",
+            "claude-3-sonnet-20240229",
+            "claude-3-opus-20240229"
+        ], key=f"model_select_{convo['conversation_id']}")
+
+        st.button("Run Analysis", key=f"run_{convo['conversation_id']}")
+
+

@@ -52,24 +52,37 @@ def fetch_prompt_variables(prompt_id):
 # UI
 st.title("Evaluation Dashboard")
 conversations = st.session_state.conversations
+with st.expander("Filter Options"):
+    username_filter = st.text_input("Filter by Username")
+    date_filter = st.date_input("Filter by Date", value=None, key="date_filter")
+
 per_page = 5
 total_pages = ceil(len(conversations) / per_page)
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col1:
+pagination_cols = st.columns([2, 14, 2])
+with pagination_cols[0]:
     if st.button("◀ Prev") and st.session_state.current_page > 1:
         st.session_state.current_page -= 1
-with col3:
+with pagination_cols[2]:
     if st.button("Next ▶") and st.session_state.current_page < total_pages:
         st.session_state.current_page += 1
-col2.markdown(f"<div style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
+with pagination_cols[1]:
+    st.markdown(f"<div style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
 
 start = (st.session_state.current_page - 1) * per_page
 end = start + per_page
-displayed = conversations[start:end]
+filtered_conversations = [
+    c for c in st.session_state.conversations
+    if (username_filter.lower() in c["username"].lower()) and
+       (not date_filter or c["date_of_report"].startswith(str(date_filter)))
+]
+total_pages = ceil(len(filtered_conversations) / per_page)
+start = (st.session_state.current_page - 1) * per_page
+end = start + per_page
+displayed = filtered_conversations[start:end]
 
 st.divider()
 header_cols = st.columns([2, 2, 2, 2, 2])
@@ -82,7 +95,13 @@ header_cols[4].markdown("**Analyze**")
 for convo in displayed:
     cols = st.columns([2, 2, 2, 2, 2])
     cols[0].write(convo["username"])
-    cols[1].write(convo["date_of_report"])
+    try:
+        dt_obj = datetime.fromisoformat(convo["date_of_report"].replace("Z", "+00:00"))
+        formatted_time = dt_obj.strftime("%b %d, %Y - %I:%M %p")
+    except:
+        formatted_time = convo["date_of_report"]
+    cols[1].write(formatted_time)
+
     cols[2].write(convo["conversation_id"])
 
     # View Button Logic
@@ -106,7 +125,14 @@ for convo in displayed:
         st.subheader(f"Past Analysis - {convo['conversation_id']}")
         if convo["results"]:
             for res in sorted(convo["results"], key=lambda r: r["time"], reverse=True):
-                st.markdown(f"- **Time**: {res['time']}  \n"
+                try:
+                    dt_obj = datetime.fromisoformat(res["time"])
+                    formatted_time = dt_obj.strftime("%b %d, %Y - %I:%M %p")
+                except:
+                    formatted_time = res["time"]
+
+                st.markdown(f"- **Time**: {formatted_time}  \n"
+
                             f"- **Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n"
                             f"- **Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)
                 for k, v in res["variables"].items():

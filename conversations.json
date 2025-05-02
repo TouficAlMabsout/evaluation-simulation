@@ -49,6 +49,34 @@
             "content": "Certainly, I'd be happy to help you with obtaining a visa. Could you please provide me with some more details about the type of visa you're interested in?"
           }
         ]
+      },
+      {
+        "time": "2025-05-02 13:41",
+        "prompt_id": "mv_retention_testing",
+        "model": "claude-3-opus-20240229",
+        "variables": {
+          "ContractExpiryDate": "missing",
+          "MaidBasicSalary": "5000 AED",
+          "VisaExpiryDate": "missing"
+        },
+        "output": [
+          {
+            "role": "human",
+            "content": "hello"
+          },
+          {
+            "role": "ai",
+            "content": "Hello! Thank you for reaching out to maids.cc. How may I assist you today?"
+          },
+          {
+            "role": "human",
+            "content": "I want a visa"
+          },
+          {
+            "role": "ai",
+            "content": "Thank you for your interest in obtaining a visa through maids.cc. To better assist you, could you please provide some more information about your specific requirements? Here are a few questions to help me understand your needs:\n\n1. Are you looking to sponsor a maid or domestic helper?\n2. What is the duration of the visa you require (e.g., 1 year, 2 years)?\n3. Have you already identified a specific maid you'd like to sponsor, or do you need assistance in finding a suitable candidate?\n\nOnce I have a clearer understanding of your requirements, I'll be happy to guide you through the visa application process and provide you with the necessary information."
+          }
+        ]
       }
     ]
   },

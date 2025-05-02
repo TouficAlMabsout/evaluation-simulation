@@ -1,15 +1,41 @@
-import json
-import os
+# data_store.py using Firestore
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "conversations.json")
+import firebase_admin
+from firebase_admin import credentials, firestore
+import os
+SERVICE_KEY_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "service_keys",
+    "tartil-app-firebase-adminsdk-dsr35-9540e005f7.json"
+)
+# Init Firebase Admin
+if not firebase_admin._apps:
+    cred = credentials.Certificate(SERVICE_KEY_PATH)  # Replace with your correct path
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+collection_name = "chat_reports"  # name of your Firestore collection
+
 
 def load_conversations():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        return data
+    docs = db.collection(collection_name).stream()
+    conversations = []
+    for doc in docs:
+        data = doc.to_dict()
+        conversations.append(data)
+    return conversations
+
 
 def save_conversations(convos):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(convos, f, indent=2)
+    batch = db.batch()
+    for convo in convos:
+        doc_ref = db.collection(collection_name).document(convo["conversation_id"])
+        batch.set(doc_ref, convo)
+    batch.commit()
+
+
+# Optional: Save a single conversation
+
+# def save_single_conversation(convo):
+#   doc_ref = db.collection(collection_name).document(convo["conversation_id"])
+#    doc_ref.set(convo)

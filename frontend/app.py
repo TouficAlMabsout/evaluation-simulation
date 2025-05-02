@@ -76,7 +76,7 @@ header_cols = st.columns([2, 2, 2, 2, 2])
 header_cols[0].markdown("**Username**")
 header_cols[1].markdown("**Date & Time**")
 header_cols[2].markdown("**Conversation ID**")
-header_cols[3].markdown("**View Past Analysis**")
+header_cols[3].markdown("**Past Analysis**")
 header_cols[4].markdown("**Analyze**")
 
 for convo in displayed:
@@ -110,7 +110,7 @@ for convo in displayed:
                             f"- **Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n"
                             f"- **Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)
                 for k, v in res["variables"].items():
-                    if v == "missing":
+                    if v == "":
                         st.markdown(f"""
                         <div style="margin-left: 20px;">
                             <strong style="color:#f0f0f0;">{k}:</strong> 
@@ -145,7 +145,7 @@ for convo in displayed:
                 st.markdown("**Optional Variables:**")
                 for var in input_variables:
                     value = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
-                    variable_values[var] = value if value.strip() else "missing"
+                    variable_values[var] = value if value.strip() else ""
 
         if st.button("Run Analysis", key=f"run_{convo['conversation_id']}"):
             try:

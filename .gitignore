@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .env
 *.DS_Store
+service_keys/tartil-app-firebase-adminsdk-dsr35-9540e005f7.json

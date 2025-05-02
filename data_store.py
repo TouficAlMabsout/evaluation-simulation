@@ -23,6 +23,8 @@ def load_conversations():
     for doc in docs:
         data = doc.to_dict()
         conversations.append(data)
+     # Sort descending by date_of_report (most recent first)
+    conversations.sort(key=lambda c: c.get("date_of_report", ""), reverse=True)
     return conversations
 
 

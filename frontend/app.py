@@ -85,15 +85,15 @@ end = start + per_page
 displayed = filtered_conversations[start:end]
 
 st.divider()
-header_cols = st.columns([2, 2, 2, 2, 2])
-header_cols[0].markdown("**Username**")
-header_cols[1].markdown("**Date & Time**")
-header_cols[2].markdown("**Conversation ID**")
-header_cols[3].markdown("**Past Analysis**")
-header_cols[4].markdown("**Analyze**")
+header_cols = st.columns([4, 7, 6, 5, 5])
+header_cols[0].markdown("**User**")
+header_cols[1].markdown("**Submitted At**")
+header_cols[2].markdown("**Chat ID**")
+header_cols[3].markdown("**History**")
+header_cols[4].markdown("**Simulate**")
 
 for convo in displayed:
-    cols = st.columns([2, 2, 2, 2, 2])
+    cols = st.columns([4, 7, 6, 5, 5])
     cols[0].write(convo["username"])
     try:
         dt_obj = datetime.fromisoformat(convo["date_of_report"].replace("Z", "+00:00"))
@@ -113,7 +113,7 @@ for convo in displayed:
             st.session_state.open_analyze_id = None
 
     # Analyze Button Logic
-    if cols[4].button("Analyze", key=f"analyze_{convo['conversation_id']}"):
+    if cols[4].button("Simulate", key=f"analyze_{convo['conversation_id']}"):
         if st.session_state.open_analyze_id == convo["conversation_id"]:
             st.session_state.open_analyze_id = None
         else:
@@ -122,7 +122,7 @@ for convo in displayed:
 
     # Render View Panel
     if st.session_state.open_view_id == convo["conversation_id"]:
-        st.subheader(f"Past Analysis - {convo['conversation_id']}")
+        st.subheader(f"Past Simulations - {convo['conversation_id']}")
         if convo["results"]:
             for res in sorted(convo["results"], key=lambda r: r["time"], reverse=True):
                 try:
@@ -155,11 +155,11 @@ for convo in displayed:
                     st.markdown(f"<div style='background-color:{bubble_color}; padding:10px 15px; border-radius:10px; margin:8px 0; color:#f0f0f0;'><strong>{m['role'].capitalize()}:</strong><br>{m['content']}</div>", unsafe_allow_html=True)
                 st.markdown("---")
         else:
-            st.info("No past analysis found.")
+            st.info("No past simulation found.")
 
     # Render Analyze Panel
     if st.session_state.open_analyze_id == convo["conversation_id"]:
-        st.subheader(f"New Analysis - {convo['conversation_id']}")
+        st.subheader(f"New Simulation - {convo['conversation_id']}")
         prompt_list = fetch_prompt_list()
         selected_prompt = st.selectbox("Select Prompt", [""] + prompt_list, key=f"prompt_{convo['conversation_id']}")
         selected_model = st.selectbox("Select Model", ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"], key=f"model_{convo['conversation_id']}")
@@ -173,7 +173,7 @@ for convo in displayed:
                     value = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
                     variable_values[var] = value if value.strip() else ""
 
-        if st.button("Run Analysis", key=f"run_{convo['conversation_id']}"):
+        if st.button("Simulate", key=f"run_{convo['conversation_id']}"):
             try:
                 json_payload = json.dumps(convo["content"])
                 files = {"file": ("chat.json", json_payload, "application/json")}
@@ -193,7 +193,7 @@ for convo in displayed:
                         "output": output
                     })
                     save_single_conversation(convo)
-                    st.success("Analysis completed.")
+                    st.success("Simulation completed.")
                     st.session_state.open_analyze_id = None
                 else:
                     st.error(f"Error {res.status_code}: {res.text}")

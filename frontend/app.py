@@ -7,7 +7,7 @@ from datetime import datetime
 from math import ceil
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_conversations
+from data_store import load_conversations, save_single_conversation
 
 # Load environment variables
 load_dotenv()
@@ -166,7 +166,7 @@ for convo in displayed:
                         "variables": variable_values,
                         "output": output
                     })
-                    save_conversations(st.session_state.conversations)
+                    save_single_conversation(convo)
                     st.success("Analysis completed.")
                     st.session_state.open_analyze_id = None
                 else:

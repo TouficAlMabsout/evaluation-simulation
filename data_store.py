@@ -6,7 +6,7 @@ import os
 SERVICE_KEY_PATH = os.path.join(
     os.path.dirname(__file__),
     "service_keys",
-    "tartil-app-firebase-adminsdk-dsr35-9540e005f7.json"
+    "chatcc-evaluation-firebase-adminsdk-fbsvc-9ed0aadefe.json"
 )
 # Init Firebase Admin
 if not firebase_admin._apps:
@@ -27,15 +27,9 @@ def load_conversations():
 
 
 def save_conversations(convos):
-    batch = db.batch()
     for convo in convos:
-        doc_ref = db.collection(collection_name).document(convo["conversation_id"])
-        batch.set(doc_ref, convo)
-    batch.commit()
+        save_single_conversation(convo)
 
-
-# Optional: Save a single conversation
-
-# def save_single_conversation(convo):
-#   doc_ref = db.collection(collection_name).document(convo["conversation_id"])
-#    doc_ref.set(convo)
+def save_single_conversation(convo):
+  doc_ref = db.collection(collection_name).document(convo["conversation_id"])
+  doc_ref.set(convo)

@@ -60,7 +60,7 @@ filtered_conversations = [
     if (username_filter.lower() in c["username"].lower()) and
        (not date_filter or c["date_of_report"].startswith(str(date_filter)))
 ]
-total_pages = ceil(len(filtered_conversations) / per_page)
+total_pages = max(1,ceil(len(filtered_conversations) / per_page))
 start = (st.session_state.current_page - 1) * per_page
 end = start + per_page
 displayed = filtered_conversations[start:end]

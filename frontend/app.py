@@ -64,6 +64,8 @@ total_pages = max(1,ceil(len(filtered_conversations) / per_page))
 start = (st.session_state.current_page - 1) * per_page
 end = start + per_page
 displayed = filtered_conversations[start:end]
+if not displayed:
+    st.warning("No conversations found with the current filters.")
 
 # Pagination
 pagination_cols = st.columns([2, 14, 2])

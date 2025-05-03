@@ -20,11 +20,8 @@ if "open_analyze_id" not in st.session_state:
     st.session_state.open_analyze_id = None
 if "open_view_id" not in st.session_state:
     st.session_state.open_view_id = None
-if "prompt_cache" not in st.session_state:
-    st.session_state.prompt_cache = {}
 
 # API fetch functions
-@st.cache_data(show_spinner=False)
 def fetch_prompt_list():
     try:
         res = requests.get("http://localhost:8000/prompts")
@@ -36,14 +33,10 @@ def fetch_prompt_list():
         return []
 
 def fetch_prompt_variables(prompt_id):
-    if prompt_id in st.session_state.prompt_cache:
-        return st.session_state.prompt_cache[prompt_id]
     try:
         res = requests.get("http://localhost:8000/prompt-variables", params={"prompt_id": prompt_id})
         if res.status_code == 200:
-            vars = res.json().get("variables", [])
-            st.session_state.prompt_cache[prompt_id] = vars
-            return vars
+            return res.json().get("variables", [])
         else:
             return []
     except:

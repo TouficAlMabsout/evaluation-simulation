@@ -80,3 +80,18 @@ def delete_conversation(dataset_name, conversation_id):
     if not dataset_name or not conversation_id:
         raise ValueError("Both dataset_name and conversation_id are required")
     db.collection(ROOT_COLLECTION).document(dataset_name).collection("conversations").document(conversation_id).delete()
+
+def duplicate_conversation(source_convo, target_dataset, clear_results=False):
+    convo_copy = dict(source_convo)
+    if clear_results:
+        convo_copy["results"] = []
+
+    doc_ref = (
+        db.collection("chat_reports")
+        .document(target_dataset)
+        .collection("conversations")
+        .document(convo_copy["conversation_id"])
+    )
+    doc_ref.set(convo_copy)
+
+

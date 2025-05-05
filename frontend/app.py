@@ -8,7 +8,7 @@ from datetime import datetime
 from math import ceil
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation
+from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation
 
 # Load environment variables
 load_dotenv()
@@ -283,6 +283,25 @@ for convo in displayed:
             st.success(f"Chat {convo['conversation_id']} deleted.")
             st.session_state.conversations = load_conversations(st.session_state.dataset_name)
             st.rerun()
+        with st.expander("⧉ Duplicate this Chat"):
+            target_dataset = st.selectbox(
+                "Select destination dataset",
+                [d for d in load_dataset_names() if d != st.session_state.dataset_name],
+                key=f"copy_target_{convo['conversation_id']}"
+            )
+
+            col_copy1, col_copy2 = st.columns(2)
+
+            with col_copy1:
+                if st.button("⎘ Copy With Results", key=f"copy_with_{convo['conversation_id']}"):
+                    duplicate_conversation(convo, target_dataset, clear_results=False)
+                    st.success(f"Chat copied to '{target_dataset}' with results")
+
+            with col_copy2:
+                if st.button("⎚ Copy Without Results", key=f"copy_empty_{convo['conversation_id']}"):
+                    duplicate_conversation(convo, target_dataset, clear_results=True)
+                    st.success(f"Chat copied to '{target_dataset}' without results")
+
 
 
 

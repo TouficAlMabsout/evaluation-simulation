@@ -54,17 +54,18 @@ with st.expander("▦ Dataset Management"):
     new_name = st.text_input("Create New Dataset", placeholder="Enter dataset name")
     if st.button("✚ Create Dataset"):
         try:
-            from data_store import create_dataset
-            create_dataset(new_name.strip())
-            st.success(f"Dataset '{new_name.strip()}' created successfully.")
-            st.rerun()
+            if new_name.strip() in load_dataset_names():
+                st.warning("A dataset with that name already exists.")
+            else:
+                create_dataset(new_name.strip())
+                st.success(f"Dataset '{new_name.strip()}' created successfully.")
+                st.rerun()
         except Exception as e:
             st.error(f"Failed to create dataset: {e}")
 
     selected_for_deletion = st.selectbox("Delete Existing Dataset", load_dataset_names())
     if st.button("🗑 Delete Selected Dataset"):
         try:
-            from data_store import delete_dataset
             delete_dataset(selected_for_deletion)
             st.success(f"Dataset '{selected_for_deletion}' deleted.")
             if selected_for_deletion == st.session_state.dataset_name:
@@ -278,7 +279,6 @@ for convo in displayed:
                 )
 
         if st.button("🗑 Delete this Chat", key=f"delete_{convo['conversation_id']}"):
-            from data_store import delete_conversation
             delete_conversation(st.session_state.dataset_name, convo["conversation_id"])
             st.success(f"Chat {convo['conversation_id']} deleted.")
             st.session_state.conversations = load_conversations(st.session_state.dataset_name)

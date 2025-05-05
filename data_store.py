@@ -75,3 +75,8 @@ def delete_dataset(dataset_name):
     for convo in conversations:
         convo.delete()
     dataset_ref.delete()
+
+def delete_conversation(dataset_name, conversation_id):
+    if not dataset_name or not conversation_id:
+        raise ValueError("Both dataset_name and conversation_id are required")
+    db.collection(ROOT_COLLECTION).document(dataset_name).collection("conversations").document(conversation_id).delete()

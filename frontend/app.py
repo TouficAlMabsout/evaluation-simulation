@@ -8,7 +8,7 @@ from datetime import datetime
 from math import ceil
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset
+from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation
 
 # Load environment variables
 load_dotenv()
@@ -168,34 +168,41 @@ if st.button("Simulate All"):
 
 # ---------- Header Row ----------
 st.divider()
-header_cols = st.columns([3, 7, 6, 3, 4, 4])
-header_cols[0].markdown("**User**")
-header_cols[1].markdown("**Submitted At**")
-header_cols[2].markdown("**Chat ID**")
-header_cols[3].markdown("**Sim Count**")
-header_cols[4].markdown("**History**")
-header_cols[5].markdown("**Simulate**")
+header_cols = st.columns([2, 3, 7, 7, 3, 4, 5])
+header_cols[1].markdown("**User**")
+header_cols[2].markdown("**Submitted At**")
+header_cols[3].markdown("**Chat ID**")
+header_cols[4].markdown("**Sim Count**")
+header_cols[5].markdown("**History**")
+header_cols[6].markdown("**Simulate**")
 
 # ---------- Individual Chat Rows ----------
 for convo in displayed:
-    cols = st.columns([3, 7, 6, 3, 4, 4])
-    cols[0].write(convo["username"])
+    cols = st.columns([2, 3, 7, 7, 3, 4, 5])
+    cols[1].write(convo["username"])
     try:
         dt_obj = datetime.fromisoformat(convo["date_of_report"].replace("Z", "+00:00"))
         formatted_time = dt_obj.strftime("%b %d, %Y - %I:%M %p")
     except:
         formatted_time = convo["date_of_report"]
-    cols[1].write(formatted_time)
-    cols[2].write(convo["conversation_id"])
-    cols[3].write(str(len(convo.get("results", []))))
+    cols[2].write(formatted_time)
+    cols[3].write(convo["conversation_id"])
+    cols[4].write(str(len(convo.get("results", []))))
 
-    if cols[4].button("View", key=f"view_{convo['conversation_id']}"):
+    if cols[5].button("View", key=f"view_{convo['conversation_id']}"):
         st.session_state.open_view_id = None if st.session_state.open_view_id == convo["conversation_id"] else convo["conversation_id"]
         st.session_state.open_analyze_id = None
 
-    if cols[5].button("Simulate", key=f"analyze_{convo['conversation_id']}"):
+    if cols[6].button("Simulate", key=f"analyze_{convo['conversation_id']}"):
         st.session_state.open_analyze_id = None if st.session_state.open_analyze_id == convo["conversation_id"] else convo["conversation_id"]
         st.session_state.open_view_id = None
+
+    if cols[0].button("🛈", key=f"details_{convo['conversation_id']}"):
+        st.session_state.open_details_id = (
+            None if st.session_state.get("open_details_id") == convo["conversation_id"]
+            else convo["conversation_id"]
+        )
+
 
     if st.session_state.open_view_id == convo["conversation_id"]:
         st.subheader(f"Past Simulations - {convo['conversation_id']}")
@@ -259,3 +266,23 @@ for convo in displayed:
                     st.error(f"Error {res.status_code}: {res.text}")
             except Exception as e:
                 st.error(f"Error during simulation: {e}")
+    
+    if st.session_state.get("open_details_id") == convo["conversation_id"]:
+        st.markdown(f"#### Chat Details – {convo['conversation_id']}")
+
+        for msg in convo["content"]:
+            if msg["role"] == "human":
+                st.markdown(
+                    f"<div style='background-color:#2a2d32; padding:10px 15px; border-radius:10px; margin:8px 0; color:#f0f0f0;'><strong>Human:</strong><br>{msg['content']}</div>",
+                    unsafe_allow_html=True,
+                )
+
+        if st.button("🗑 Delete this Chat", key=f"delete_{convo['conversation_id']}"):
+            from data_store import delete_conversation
+            delete_conversation(st.session_state.dataset_name, convo["conversation_id"])
+            st.success(f"Chat {convo['conversation_id']} deleted.")
+            st.session_state.conversations = load_conversations(st.session_state.dataset_name)
+            st.rerun()
+
+
+

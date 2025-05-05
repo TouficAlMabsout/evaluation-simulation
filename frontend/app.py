@@ -8,14 +8,17 @@ from datetime import datetime
 from math import ceil
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_single_conversation
+from data_store import load_conversations, save_single_conversation, load_dataset_names
 
 # Load environment variables
 load_dotenv()
 
 # Init session state
+if "dataset_name" not in st.session_state:
+    dataset_names = load_dataset_names()
+    st.session_state.dataset_name = dataset_names[0] if dataset_names else ""
 if "conversations" not in st.session_state:
-    st.session_state.conversations = load_conversations()
+    st.session_state.conversations = load_conversations(st.session_state.dataset_name)
 if "open_analyze_id" not in st.session_state:
     st.session_state.open_analyze_id = None
 if "open_view_id" not in st.session_state:
@@ -47,9 +50,24 @@ if not st.session_state.prompt_list:
 # UI Setup
 st.title("Evaluation Dashboard")
 
+
+# Dataset selector
+if "dataset_name" not in st.session_state:
+    dataset_names = load_dataset_names()
+    st.session_state.dataset_name = dataset_names[0] if dataset_names else ""
+else:
+    dataset_names = load_dataset_names()
+
+selected_dataset = st.selectbox("Select Dataset", dataset_names, index=dataset_names.index(st.session_state.dataset_name) if st.session_state.dataset_name in dataset_names else 0)
+if selected_dataset != st.session_state.dataset_name:
+    st.session_state.dataset_name = selected_dataset
+    st.session_state.conversations = load_conversations(selected_dataset)
+    st.rerun()
+
+
 if st.button("⟳ Refresh Conversations"):
-    st.session_state.conversations = load_conversations()
-    st.success("Conversations refreshed!")
+    st.session_state.conversations = load_conversations(st.session_state.dataset_name)
+    st.success(f"Refreshed dataset: {st.session_state.dataset_name}")
 
 
 conversations = st.session_state.conversations
@@ -127,7 +145,7 @@ if username_filter and filtered_conversations:
                             "variables": variable_values,
                             "output": output
                         })
-                        save_single_conversation(convo)
+                        save_single_conversation(convo, st.session_state.dataset_name)
                     else:
                         st.warning(f"Error simulating chat {convo['conversation_id']}: {res.status_code}")
                 except Exception as e:
@@ -220,7 +238,7 @@ for convo in displayed:
                         "variables": variable_values,
                         "output": output
                     })
-                    save_single_conversation(convo)
+                    save_single_conversation(convo, st.session_state.dataset_name)
                     st.success("Simulation completed.")
                     st.session_state.open_analyze_id = None
                 else:

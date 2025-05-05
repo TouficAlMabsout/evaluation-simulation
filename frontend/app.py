@@ -46,6 +46,12 @@ if not st.session_state.prompt_list:
 
 # UI Setup
 st.title("Evaluation Dashboard")
+
+if st.button("⟳ Refresh Conversations"):
+    st.session_state.conversations = load_conversations()
+    st.success("Conversations refreshed!")
+
+
 conversations = st.session_state.conversations
 with st.expander("Filter Options"):
     username_filter = st.text_input("Filter by Username")

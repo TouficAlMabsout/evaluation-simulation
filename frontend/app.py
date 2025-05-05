@@ -83,6 +83,10 @@ selected_dataset = st.selectbox("Select Dataset", dataset_names, index=dataset_n
 if selected_dataset != st.session_state.dataset_name:
     st.session_state.dataset_name = selected_dataset
     st.session_state.conversations = load_conversations(selected_dataset)
+    # Reset open tabs
+    st.session_state.open_analyze_id = None
+    st.session_state.open_view_id = None
+    st.session_state.open_details_id = None
     st.rerun()
 
 
@@ -193,16 +197,20 @@ for convo in displayed:
     if cols[5].button("View", key=f"view_{convo['conversation_id']}"):
         st.session_state.open_view_id = None if st.session_state.open_view_id == convo["conversation_id"] else convo["conversation_id"]
         st.session_state.open_analyze_id = None
+        st.session_state.open_details_id = None
 
     if cols[6].button("Simulate", key=f"analyze_{convo['conversation_id']}"):
         st.session_state.open_analyze_id = None if st.session_state.open_analyze_id == convo["conversation_id"] else convo["conversation_id"]
         st.session_state.open_view_id = None
+        st.session_state.open_details_id = None
 
     if cols[0].button("🛈", key=f"details_{convo['conversation_id']}"):
         st.session_state.open_details_id = (
             None if st.session_state.get("open_details_id") == convo["conversation_id"]
             else convo["conversation_id"]
         )
+        st.session_state.open_view_id = None
+        st.session_state.open_analyze_id = None
 
 
     if st.session_state.open_view_id == convo["conversation_id"]:

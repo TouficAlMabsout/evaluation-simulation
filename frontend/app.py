@@ -8,7 +8,7 @@ from datetime import datetime
 from math import ceil
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_single_conversation, load_dataset_names
+from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset
 
 # Load environment variables
 load_dotenv()
@@ -50,6 +50,28 @@ if not st.session_state.prompt_list:
 # UI Setup
 st.title("Evaluation Dashboard")
 
+with st.expander("▦ Dataset Management"):
+    new_name = st.text_input("Create New Dataset", placeholder="Enter dataset name")
+    if st.button("✚ Create Dataset"):
+        try:
+            from data_store import create_dataset
+            create_dataset(new_name.strip())
+            st.success(f"Dataset '{new_name.strip()}' created successfully.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Failed to create dataset: {e}")
+
+    selected_for_deletion = st.selectbox("Delete Existing Dataset", load_dataset_names())
+    if st.button("🗑 Delete Selected Dataset"):
+        try:
+            from data_store import delete_dataset
+            delete_dataset(selected_for_deletion)
+            st.success(f"Dataset '{selected_for_deletion}' deleted.")
+            if selected_for_deletion == st.session_state.dataset_name:
+                st.session_state.dataset_name = ""
+            st.rerun()
+        except Exception as e:
+            st.error(f"Failed to delete dataset: {e}")
 
 # Dataset selector
 dataset_names = load_dataset_names()

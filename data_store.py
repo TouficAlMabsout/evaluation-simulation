@@ -58,3 +58,20 @@ def save_single_conversation(convo, dataset_name):
 def save_conversations(convos, dataset_name):
     for convo in convos:
         save_single_conversation(convo, dataset_name)
+
+# 🔹 Create an empty dataset
+def create_dataset(dataset_name):
+    if not dataset_name:
+        raise ValueError("Dataset name cannot be empty.")
+    db.collection(ROOT_COLLECTION).document(dataset_name).set({})
+
+# 🔹 Delete a dataset (including its conversations)
+def delete_dataset(dataset_name):
+    if not dataset_name:
+        raise ValueError("Dataset name cannot be empty.")
+    dataset_ref = db.collection(ROOT_COLLECTION).document(dataset_name)
+    # Delete all subcollection documents first
+    conversations = dataset_ref.collection("conversations").list_documents()
+    for convo in conversations:
+        convo.delete()
+    dataset_ref.delete()

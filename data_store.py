@@ -94,4 +94,25 @@ def duplicate_conversation(source_convo, target_dataset, clear_results=False):
     )
     doc_ref.set(convo_copy)
 
+def rename_dataset(old_name, new_name):
+    if not old_name or not new_name:
+        raise ValueError("Both old and new names are required.")
+
+    # Check for conflict
+    existing = load_dataset_names()
+    if new_name in existing:
+        raise ValueError("A dataset with the new name already exists.")
+
+    # Copy conversations to new dataset
+    old_ref = db.collection(ROOT_COLLECTION).document(old_name).collection("conversations")
+    new_ref = db.collection(ROOT_COLLECTION).document(new_name).collection("conversations")
+
+    for doc in old_ref.stream():
+        new_ref.document(doc.id).set(doc.to_dict())
+
+    # Delete old dataset
+    delete_dataset(old_name)
+    # Create metadata entry for new dataset
+    db.collection(ROOT_COLLECTION).document(new_name).set({})
+
 

@@ -8,7 +8,7 @@ from datetime import datetime
 from math import ceil
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation
+from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
 
 # Load environment variables
 load_dotenv()
@@ -73,6 +73,28 @@ with st.expander("▦ Dataset Management"):
             st.rerun()
         except Exception as e:
             st.error(f"Failed to delete dataset: {e}")
+    st.markdown("---")
+    st.markdown("**Rename Existing Dataset**")
+    rename_col1, rename_col2 = st.columns(2)
+    with rename_col1:
+        dataset_to_rename = st.selectbox("Select Dataset to Rename", load_dataset_names(), key="rename_source")
+    with rename_col2:
+        new_dataset_name = st.text_input("New Name", key="rename_target")
+
+    if st.button("✎ Rename Dataset"):
+        try:
+            if new_dataset_name.strip() in load_dataset_names():
+                st.warning("A dataset with that name already exists.")
+            else:
+                from data_store import rename_dataset
+                rename_dataset(dataset_to_rename, new_dataset_name.strip())
+                st.success(f"Dataset renamed to '{new_dataset_name.strip()}' successfully.")
+                if st.session_state.dataset_name == dataset_to_rename:
+                    st.session_state.dataset_name = new_dataset_name.strip()
+                st.rerun()
+        except Exception as e:
+            st.error(f"Failed to rename dataset: {e}")
+
 
 # Dataset selector
 dataset_names = load_dataset_names()

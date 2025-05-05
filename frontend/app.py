@@ -52,11 +52,9 @@ st.title("Evaluation Dashboard")
 
 
 # Dataset selector
+dataset_names = load_dataset_names()
 if "dataset_name" not in st.session_state:
-    dataset_names = load_dataset_names()
     st.session_state.dataset_name = dataset_names[0] if dataset_names else ""
-else:
-    dataset_names = load_dataset_names()
 
 selected_dataset = st.selectbox("Select Dataset", dataset_names, index=dataset_names.index(st.session_state.dataset_name) if st.session_state.dataset_name in dataset_names else 0)
 if selected_dataset != st.session_state.dataset_name:
@@ -72,7 +70,6 @@ if st.button("⟳ Refresh Conversations"):
 
 conversations = st.session_state.conversations
 with st.expander("Filter Options"):
-    username_filter = st.text_input("Filter by Username")
     date_filter = st.date_input("Filter by Date", value=None, key="date_filter")
 
 per_page = 3
@@ -81,9 +78,9 @@ if "current_page" not in st.session_state:
 
 filtered_conversations = [
     c for c in st.session_state.conversations
-    if (username_filter.lower() in c["username"].lower()) and
-       (not date_filter or c["date_of_report"].startswith(str(date_filter)))
+    if not date_filter or c["date_of_report"].startswith(str(date_filter))
 ]
+
 total_pages = max(1,ceil(len(filtered_conversations) / per_page))
 start = (st.session_state.current_page - 1) * per_page
 end = start + per_page
@@ -106,51 +103,46 @@ with pagination_cols[2]:
 with pagination_cols[1]:
     st.markdown(f"<div style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
 
-# ---------- Batch Simulation Panel ----------
-if username_filter and filtered_conversations:
-    st.markdown(f"**Simulate all chats for user:** `{username_filter}`")
+st.markdown("### Simulate All Conversations in This Dataset")
 
-    selected_prompt = st.selectbox("Select Prompt", [""] + st.session_state.prompt_list, key="batch_prompt")
-    selected_model = st.selectbox("Select Model", ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"], key="batch_model")
+selected_prompt = st.selectbox("Select Prompt", [""] + st.session_state.prompt_list, key="dataset_prompt")
+selected_model = st.selectbox("Select Model", ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"], key="dataset_model")
 
-    if selected_prompt and selected_prompt not in st.session_state.prompt_vars_cache:
-        st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
+if selected_prompt and selected_prompt not in st.session_state.prompt_vars_cache:
+    st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
 
-    variable_values = {}
-    prompt_vars = st.session_state.prompt_vars_cache.get(selected_prompt, [])
-    for var in prompt_vars:
-        val = st.text_input(f"{var} (optional)", key=f"batch_input_{var}")
-        variable_values[var] = val if val.strip() else ""
+dataset_variable_values = {}
+prompt_vars = st.session_state.prompt_vars_cache.get(selected_prompt, [])
+for var in prompt_vars:
+    val = st.text_input(f"{var} (optional)", key=f"dataset_input_{var}")
+    dataset_variable_values[var] = val if val.strip() else ""
 
-    if st.button("Simulate All Chats for This User"):
-        if not selected_prompt:
-            st.error("Please select a prompt before simulating.")
-        else:
-            for convo in filtered_conversations:
-                json_payload = json.dumps(convo["content"])
-                files = {"file": ("chat.json", json_payload, "application/json")}
-                data = {
+if st.button("Simulate All"):
+    for convo in filtered_conversations:
+        json_payload = json.dumps(convo["content"])
+        files = {"file": ("chat.json", json_payload, "application/json")}
+        data = {
+            "prompt_id": selected_prompt,
+            "model_name": selected_model,
+            "variables_json": json.dumps(dataset_variable_values)
+        }
+        try:
+            res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+            if res.status_code == 200:
+                output = res.json()
+                convo["results"].append({
+                    "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
                     "prompt_id": selected_prompt,
-                    "model_name": selected_model,
-                    "variables_json": json.dumps(variable_values)
-                }
-                try:
-                    res = requests.post("http://localhost:8000/simulate", files=files, data=data)
-                    if res.status_code == 200:
-                        output = res.json()
-                        convo["results"].append({
-                            "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                            "prompt_id": selected_prompt,
-                            "model": selected_model,
-                            "variables": variable_values,
-                            "output": output
-                        })
-                        save_single_conversation(convo, st.session_state.dataset_name)
-                    else:
-                        st.warning(f"Error simulating chat {convo['conversation_id']}: {res.status_code}")
-                except Exception as e:
-                    st.warning(f"Simulation failed for chat {convo['conversation_id']}: {e}")
-            st.success("All chats simulated successfully.")
+                    "model": selected_model,
+                    "variables": dataset_variable_values,
+                    "output": output
+                })
+                save_single_conversation(convo, st.session_state.dataset_name)
+            else:
+                st.warning(f"Error simulating chat {convo['conversation_id']}: {res.status_code}")
+        except Exception as e:
+            st.warning(f"Simulation failed for chat {convo['conversation_id']}: {e}")
+    st.success("All conversations simulated successfully.")
 
 # ---------- Header Row ----------
 st.divider()

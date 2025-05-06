@@ -37,11 +37,11 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone (via IP lookup)
 # ------------------------------
 # 🔹 Get browser timezone using JS
-from streamlit_js_eval import get_timezone
+from streamlit_js_eval import streamlit_js_eval
 
 if "user_tz" not in st.session_state:
-    js_tz = get_timezone()
-    st.write(f"🧪 Detected JS timezone: `{js_tz}`")
+    js_tz = streamlit_js_eval("Intl.DateTimeFormat().resolvedOptions().timeZone", key="get_tz")
+    st.write(f"🧪 JavaScript timezone detected: `{js_tz}`")
 
     if js_tz:
         try:
@@ -51,7 +51,7 @@ if "user_tz" not in st.session_state:
             st.warning(f"⚠️ Unknown timezone `{js_tz}` — defaulting to Asia/Dubai")
             st.session_state.user_tz = pytz.timezone("Asia/Dubai")
     else:
-        st.warning("⚠️ Could not detect timezone via JS — using default Asia/Dubai")
+        st.warning("⚠️ Could not detect timezone — defaulting to Asia/Dubai")
         st.session_state.user_tz = pytz.timezone("Asia/Dubai")
 
 user_tz = st.session_state.user_tz

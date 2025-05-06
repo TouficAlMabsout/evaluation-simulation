@@ -6,12 +6,11 @@ import json
 import os
 from io import StringIO
 
-from streamlit.runtime.secrets import secrets  # Optional, for future fallback
-
 FIREBASE_CREDENTIALS_JSON = os.getenv("FIREBASE_CREDENTIALS_JSON")
 
 if not firebase_admin._apps:
     cred = credentials.Certificate(json.load(StringIO(FIREBASE_CREDENTIALS_JSON)))
+    firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 ROOT_COLLECTION = "chat_reports"

@@ -41,44 +41,40 @@ MODEL_OPTIONS = {
 # Detect timezone only once per session
 import streamlit.components.v1 as components
 
-# Detect timezone via JS only once
+import streamlit.components.v1 as components
+
+# ✅ Step 1: Inject timezone into the URL once
 if "user_timezone" not in st.session_state:
     components.html(
         """
         <script>
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const streamlitDoc = window.parent.document;
-        streamlitDoc.dispatchEvent(new CustomEvent("GET_TZ", { detail: tz }));
+        const qs = new URLSearchParams(window.location.search);
+        if (!qs.has("tz")) {
+            qs.set("tz", tz);
+            window.location.search = "?" + qs.toString();  // Reloads the page with tz param
+        }
         </script>
         """,
         height=0,
     )
 
-    # Listen for the timezone message via JS -> Python bridge
-    from streamlit.runtime.scriptrunner import add_script_run_ctx
-    import threading
+# ✅ Step 2: Read from query params
+if "user_timezone" not in st.session_state:
+    tz_from_url = st.query_params.get("tz")
+    if tz_from_url:
+        st.session_state.user_timezone = tz_from_url
 
-    def listen_for_tz():
-        import time
-        time.sleep(1)
-        if "user_timezone" not in st.session_state:
-            st.session_state.user_timezone = "UTC"
+# ✅ Step 3: Manual fallback
+if "user_timezone" not in st.session_state:
+    st.session_state.user_timezone = st.selectbox("Select your timezone", pytz.all_timezones)
 
-    threading.Thread(target=listen_for_tz).start()
-
-    def set_tz():
-        tz = st.query_params.get("tz")
-        if tz:
-            st.session_state.user_timezone = tz[0]
-
-    set_tz()
-
-# Fallback timezone
-user_tz_str = st.session_state.get("user_timezone", "UTC")
+# ✅ Step 4: Convert to pytz object
 try:
-    user_tz = pytz.timezone(user_tz_str)
+    user_tz = pytz.timezone(st.session_state.user_timezone)
 except pytz.UnknownTimeZoneError:
     user_tz = pytz.timezone("UTC")
+
 
 # Init session state
 if "dataset_name" not in st.session_state:

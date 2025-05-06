@@ -15,23 +15,23 @@ def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, anthropic_
     if ":" in model_name:
         family, submodel = model_name.split(":", 1)
     else:
-        family, submodel = "claude", model_name  # default for backward compat
+        family, submodel = "claude", model_name  # default
 
-    # Select correct LLM with model_kwargs
+    # Select correct LLM
     if family == "claude":
         llm = ChatAnthropic(
             model=submodel,
-            model_kwargs={"api_key": anthropic_api_key or os.environ.get("ANTHROPIC_API_KEY")}
+            api_key=anthropic_api_key or os.environ.get("ANTHROPIC_API_KEY")
         )
     elif family == "openai":
         llm = ChatOpenAI(
             model=submodel,
-            model_kwargs={"api_key": os.environ.get("OPENAI_API_KEY")}
+            api_key=os.environ.get("OPENAI_API_KEY")
         )
     elif family == "gemini":
         llm = ChatGoogleGenerativeAI(
             model=submodel,
-            model_kwargs={"api_key": os.environ.get("GEMINI_API_KEY")}
+            google_api_key=os.environ.get("GEMINI_API_KEY")
         )
     else:
         raise ValueError(f"Unsupported model family: {family}")

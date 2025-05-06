@@ -5,6 +5,7 @@ import requests
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+import time
 from math import ceil
 import sys, os
 import pytz
@@ -79,7 +80,7 @@ offset_map = {
 
 if "user_timezone" not in st.session_state:
     try:
-        st.write(datetime.now())
+        st.write(time.localtime())
         offset = (datetime.now() - datetime.utcnow()).total_seconds() / 3600
         nearest_quarter = round(offset * 4) / 4  # round to nearest 15 min
         timezone_str = offset_map.get(nearest_quarter, "Asia/Dubai")

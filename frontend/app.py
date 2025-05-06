@@ -10,6 +10,7 @@ import sys, os
 import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
+from streamlit_javascript import st_javascript
 # Load environment variables
 load_dotenv()
 
@@ -36,22 +37,17 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone (via IP lookup)
 # ------------------------------
-def detect_timezone_from_ip():
-    try:
-        res = requests.get("https://ipinfo.io/json")
-        if res.status_code == 200:
-            data = res.json()
-            tz = data.get("timezone", "UTC")
-            st.write(f"🌍 Detected Timezone: `{tz}`")
-            return pytz.timezone(tz)
-        else:
-            st.write(f"❌ Timezone detection failed: HTTP {res.status_code}")
-    except Exception as e:
-        st.write(f"❌ Error detecting timezone: {e}")
-    return pytz.timezone("UTC")
-
+# 🔹 Get browser timezone using JS
 if "user_tz" not in st.session_state:
-    st.session_state.user_tz = detect_timezone_from_ip()
+    js_tz = st_javascript("Intl.DateTimeFormat().resolvedOptions().timeZone")
+    if js_tz:
+        try:
+            st.session_state.user_tz = pytz.timezone(js_tz)
+        except pytz.UnknownTimeZoneError:
+            st.session_state.user_tz = pytz.timezone("Asia/Dubai")
+    else:
+        st.session_state.user_tz = pytz.timezone("Asia/Dubai")
+
 user_tz = st.session_state.user_tz
 
 # Init session state

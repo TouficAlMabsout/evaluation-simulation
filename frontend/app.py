@@ -67,7 +67,7 @@ if "user_timezone" not in st.session_state:
     threading.Thread(target=listen_for_tz).start()
 
     def set_tz():
-        tz = st.query_params().get("tz")
+        tz = st.query_params.get("tz")
         if tz:
             st.session_state.user_timezone = tz[0]
 

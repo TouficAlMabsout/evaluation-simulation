@@ -44,9 +44,12 @@ if "user_timezone" not in st.session_state:
     else:
         st.session_state.user_timezone = "UTC"
 
-# Convert stored timezone string to proper pytz timezone
 user_tz_str = st.session_state.get("user_timezone", "UTC")
-user_tz = pytz.timezone(user_tz_str)
+try:
+    user_tz = pytz.timezone(user_tz_str)
+except pytz.UnknownTimeZoneError:
+    user_tz = pytz.timezone("UTC")
+
 
 # Init session state
 if "dataset_name" not in st.session_state:

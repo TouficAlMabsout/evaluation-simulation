@@ -10,7 +10,7 @@ import sys, os
 import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
-
+from streamlit_js_eval import streamlit_js_eval
 # Load environment variables
 load_dotenv()
 
@@ -38,18 +38,15 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone (once per session)
 # ------------------------------
 if "user_timezone" not in st.session_state:
-    try:
-        res = requests.get("https://ipapi.co/json/")
-        if res.status_code == 200:
-            tz = res.json().get("timezone", "UTC")
-            st.session_state.user_timezone = tz
-        else:
-            st.session_state.user_timezone = "UTC"
-    except:
+    tz = streamlit_js_eval.get_timezone()
+    if tz:
+        st.session_state.user_timezone = tz
+    else:
         st.session_state.user_timezone = "UTC"
 
-# Safe timezone object
-user_tz = pytz.timezone(st.session_state.user_timezone)
+# Convert stored timezone string to proper pytz timezone
+user_tz_str = st.session_state.get("user_timezone", "UTC")
+user_tz = pytz.timezone(user_tz_str)
 
 # Init session state
 if "dataset_name" not in st.session_state:

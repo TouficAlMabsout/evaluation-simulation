@@ -70,7 +70,7 @@ async def simulate(
 
     # Simulate conversation
     try:
-        result = simulate_chat(chat, prompt_id, model_name, LANGSMITH_API_KEY, ANTHROPIC_API_KEY, user_vars)
+        result = simulate_chat(chat, prompt_id, model_name, LANGSMITH_API_KEY, user_vars)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")

@@ -1,37 +1,43 @@
-from langsmith import Client
-from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
-def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, anthropic_api_key=None, extra_vars=None):
+def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, extra_vars=None):
+    from langsmith import Client
+
+    # 🔐 Set env vars *before* importing SDKs
+    if "claude" in model_name:
+        os.environ["ANTHROPIC_API_KEY"] = os.environ.get("ANTHROPIC_API_KEY")
+    elif "openai" in model_name:
+        os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
+    elif "gemini" in model_name:
+        os.environ["GOOGLE_API_KEY"] = os.environ.get("GEMINI_API_KEY")
+
+    from langchain_anthropic import ChatAnthropic
+    from langchain_openai import ChatOpenAI
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
     client = Client(api_key=langsmith_api_key)
     prompt = client.pull_prompt(prompt_id)
 
-    # Parse model family
     if ":" in model_name:
         family, submodel = model_name.split(":", 1)
     else:
-        family, submodel = "claude", model_name  # default
+        family, submodel = "claude", model_name
 
-    # Select correct LLM
     if family == "claude":
-        os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key or os.environ.get("ANTHROPIC_API_KEY")
         llm = ChatAnthropic(model=submodel)
 
     elif family == "openai":
-        os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY")
         llm = ChatOpenAI(model=submodel)
 
     elif family == "gemini":
-        os.environ["GOOGLE_API_KEY"] = os.environ.get("GEMINI_API_KEY")
         llm = ChatGoogleGenerativeAI(
             model=submodel,
-            convert_system_message_to_human=True  # ✅ Gemini system message fix
+            convert_system_message_to_human=True
         )
+
     else:
         raise ValueError(f"Unsupported model family: {family}")
 

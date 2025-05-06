@@ -34,41 +34,9 @@ MODEL_OPTIONS = {
 
 
 # ------------------------------
-# 🔹 Detect and store user's timezone (via IP lookup)
+# 🔹 Detect and store user's timezone
 # ------------------------------
-# 🔹 Get browser timezone using JS
-import streamlit.components.v1 as components
-
-if "tz" not in st.query_params:
-    components.html(
-        """
-        <script>
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const params = new URLSearchParams(window.location.search);
-        params.set("tz", tz);
-        window.location.search = "?" + params.toString();
-        </script>
-        """,
-        height=0,
-    )
-    st.stop()
-
-# Now safely load
-tz_param = st.query_params.get("tz")
-if tz_param and "user_tz" not in st.session_state:
-    try:
-        st.session_state.user_tz = pytz.timezone(tz_param)
-        st.success(f"🌍 Timezone set to: `{tz_param}`")
-    except pytz.UnknownTimeZoneError:
-        st.warning(f"⚠️ Unknown timezone `{tz_param}` — using Asia/Dubai")
-        st.session_state.user_tz = pytz.timezone("Asia/Dubai")
-elif "user_tz" not in st.session_state:
-    st.session_state.user_tz = pytz.timezone("Asia/Dubai")
-
-user_tz = st.session_state.user_tz
-st.info(f"📌 Final timezone in use: `{user_tz.zone}`")
-
-
+user_tz = pytz.timezone("Asia/Dubai")
 
 # Init session state
 if "dataset_name" not in st.session_state:

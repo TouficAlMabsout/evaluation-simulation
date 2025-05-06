@@ -38,7 +38,7 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone (once per session)
 # ------------------------------
 if "user_timezone" not in st.session_state:
-    tz = streamlit_js_eval("timezone")
+    tz = streamlit_js_eval(label="get_timezone", eval="Intl.DateTimeFormat().resolvedOptions().timeZone")
     if tz:
         st.session_state.user_timezone = tz
     else:

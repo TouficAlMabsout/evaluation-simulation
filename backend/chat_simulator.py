@@ -1,12 +1,18 @@
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
 def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, extra_vars=None):
-    from langsmith import Client
+    # Disable LangSmith tracing to avoid 'proxies' issue
+    os.environ["LANGCHAIN_TRACING_V2"] = "false"
+    os.environ["LANGCHAIN_API_KEY"] = ""
 
-    # 🔐 Set env vars *before* importing SDKs
+    from langsmith import Client
+    from langchain_anthropic import ChatAnthropic
+    from langchain_openai import ChatOpenAI
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
+    # Set LLM API keys
     if "claude" in model_name:
         os.environ["ANTHROPIC_API_KEY"] = os.environ.get("ANTHROPIC_API_KEY")
     elif "openai" in model_name:
@@ -14,13 +20,10 @@ def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, extra_vars
     elif "gemini" in model_name:
         os.environ["GOOGLE_API_KEY"] = os.environ.get("GEMINI_API_KEY")
 
-    from langchain_anthropic import ChatAnthropic
-    from langchain_openai import ChatOpenAI
-    from langchain_google_genai import ChatGoogleGenerativeAI
-
     client = Client(api_key=langsmith_api_key)
     prompt = client.pull_prompt(prompt_id)
 
+    # Choose LLM
     if ":" in model_name:
         family, submodel = model_name.split(":", 1)
     else:
@@ -41,6 +44,7 @@ def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, extra_vars
     else:
         raise ValueError(f"Unsupported model family: {family}")
 
+    # Simulate chat
     chain = prompt | llm
     history = []
     new_responses = []
@@ -53,7 +57,6 @@ def simulate_chat(messages, prompt_id, model_name, langsmith_api_key, extra_vars
                 "chat_history": history,
                 "question": msg["content"]
             }
-
             if extra_vars:
                 inputs.update(extra_vars)
 

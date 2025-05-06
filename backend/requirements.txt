@@ -4,28 +4,13 @@ requests==2.31.0
 python-dotenv==1.0.1
 
 # LLM SDKs
-openai==1.23.2
-anthropic==0.26.1
-google-generativeai==0.3.2
-
-# Compatible LangChain core + integrations
-langchain==0.1.16
-langchain-openai==0.1.9
-langchain-anthropic==0.1.8
-langchain-google-genai==0.0.6
-fastapi==0.115.1
-uvicorn==0.23.2
-requests==2.31.0
-python-dotenv==1.0.1
-
-# LLM SDKs
 openai==1.25.0
 anthropic==0.26.1
 google-generativeai==0.3.2
 
-# LangChain core + integrations (fully compatible)
-langchain-core==0.1.42
-langchain==0.1.13
-langchain-openai==0.0.8
-langchain-anthropic==0.0.8
-langchain-google-genai==0.0.6
+# LangChain core + integrations (all aligned with langchain-core 0.2.3)
+langchain-core==0.2.3
+langchain==0.1.20
+langchain-openai==0.1.12
+langchain-anthropic==0.1.10
+langchain-google-genai==0.1.3

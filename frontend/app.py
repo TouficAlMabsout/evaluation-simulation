@@ -10,7 +10,7 @@ import sys, os
 import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
-from streamlit_js_eval import streamlit_js_eval
+from streamlit_js_eval import st_javascript
 # Load environment variables
 load_dotenv()
 
@@ -38,19 +38,24 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone (once per session)
 # ------------------------------
 # Detect timezone only once
+# Detect timezone only once per session
 if "user_timezone" not in st.session_state:
-    streamlit_js_eval(label="get_timezone", eval="Intl.DateTimeFormat().resolvedOptions().timeZone")
-    st.warning("Detecting your timezone... Please reload in 1 second.")
-    st.stop()
+    timezone = st_javascript("""
+        await (async () => {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        })();
+    """)
+    if timezone:
+        st.session_state.user_timezone = timezone
+    else:
+        st.session_state.user_timezone = "UTC"
 
-# Get result from JS evaluation
-user_tz_str = st.session_state.get("js_eval_result", {}).get("get_timezone", "UTC")
-
+# Now convert to pytz
+user_tz_str = st.session_state.get("user_timezone", "UTC")
 try:
     user_tz = pytz.timezone(user_tz_str)
 except pytz.UnknownTimeZoneError:
     user_tz = pytz.timezone("UTC")
-
 # Init session state
 if "dataset_name" not in st.session_state:
     dataset_names = load_dataset_names()

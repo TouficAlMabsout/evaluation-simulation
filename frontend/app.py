@@ -10,7 +10,6 @@ import sys, os
 import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
-from streamlit_js_eval import streamlit_js_eval
 # Load environment variables
 load_dotenv()
 
@@ -37,42 +36,7 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone (once per session)
 # ------------------------------
-# Detect timezone only once
-# Detect timezone only once per session
-import streamlit.components.v1 as components
-
-
-# Step 1: Inject timezone using JS (only if ?tz is missing)
-if "tz" not in st.query_params:
-    components.html(
-        """
-        <script>
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const params = new URLSearchParams(window.location.search);
-        params.set("tz", tz);
-        window.location.search = "?" + params.toString();
-        </script>
-        """,
-        height=0,
-    )
-    st.stop()  # prevent rest of app from running until reload
-
-# Step 2: Read from query param and save
-tz_param = st.query_params.get("tz")
-if tz_param and "user_timezone" not in st.session_state:
-    st.session_state.user_timezone = tz_param
-
-# Step 3: Manual fallback (user override)
-if "user_timezone" not in st.session_state or st.session_state.user_timezone == "UTC":
-    selected_tz = st.selectbox("Couldn't detect timezone automatically. Please select it:", pytz.all_timezones)
-    st.session_state.user_timezone = selected_tz
-
-# Step 4: Load tz object
-try:
-    user_tz = pytz.timezone(st.session_state.user_timezone)
-except pytz.UnknownTimeZoneError:
-    user_tz = pytz.timezone("UTC")
-
+user_tz = pytz.timezone("Asia/Dubai")
 
 # Init session state
 if "dataset_name" not in st.session_state:

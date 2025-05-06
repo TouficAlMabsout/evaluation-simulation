@@ -40,15 +40,22 @@ MODEL_OPTIONS = {
 # 🔹 Get browser timezone using JS
 if "user_tz" not in st.session_state:
     js_tz = st_javascript("Intl.DateTimeFormat().resolvedOptions().timeZone")
+    st.write(f"🧪 JavaScript timezone detected: `{js_tz}`")
+
     if js_tz:
         try:
             st.session_state.user_tz = pytz.timezone(js_tz)
+            st.success(f"🌍 Timezone set to: `{js_tz}`")
         except pytz.UnknownTimeZoneError:
+            st.warning(f"⚠️ Unknown timezone `{js_tz}` — defaulting to Asia/Dubai")
             st.session_state.user_tz = pytz.timezone("Asia/Dubai")
     else:
+        st.warning("⚠️ Could not detect timezone — using default Asia/Dubai")
         st.session_state.user_tz = pytz.timezone("Asia/Dubai")
 
 user_tz = st.session_state.user_tz
+st.info(f"📌 Using timezone: `{user_tz.zone}`")
+
 
 # Init session state
 if "dataset_name" not in st.session_state:

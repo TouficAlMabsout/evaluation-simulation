@@ -14,6 +14,7 @@ from data_store import load_conversations, save_single_conversation, load_datase
 # Load environment variables
 load_dotenv()
 
+BACKEND_URL = os.getenv("BACKEND_URL")
 
 MODEL_OPTIONS = {
     "claude": [
@@ -68,14 +69,14 @@ if "prompt_list" not in st.session_state:
 # API fetch functions
 def fetch_prompt_list():
     try:
-        res = requests.get("http://localhost:8000/prompts")
+        res = requests.get(f"{BACKEND_URL}/prompts")
         return res.json() if res.status_code == 200 else []
     except:
         return []
 
 def fetch_prompt_variables(prompt_id):
     try:
-        res = requests.get("http://localhost:8000/prompt-variables", params={"prompt_id": prompt_id})
+        res = requests.get(f"{BACKEND_URL}/prompt-variables", params={"prompt_id": prompt_id})
         return res.json().get("variables", []) if res.status_code == 200 else []
     except:
         return []
@@ -236,7 +237,7 @@ if st.button("Simulate All"):
                 "variables_json": json.dumps(dataset_variable_values)
             }
             try:
-                res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+                res = requests.post(f"{BACKEND_URL}/simulate", files=files, data=data)
                 if res.status_code == 200:
                     output = res.json()
                     convo["results"].append({
@@ -356,7 +357,7 @@ for convo in displayed:
                         "variables_json": json.dumps(variable_values)
                     }
 
-                    res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+                    res = requests.post(f"{BACKEND_URL}/simulate", files=files, data=data)
 
                     if res.status_code == 200:
                         output = res.json()

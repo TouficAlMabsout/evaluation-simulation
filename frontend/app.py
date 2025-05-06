@@ -39,15 +39,41 @@ MODEL_OPTIONS = {
 # ------------------------------
 # Detect timezone only once
 # Detect timezone only once per session
-if "user_timezone" not in st.session_state:
-    tz = streamlit_js_eval(label="get_timezone", eval="Intl.DateTimeFormat().resolvedOptions().timeZone")
-    st.write("Detected timezone from JS:", tz)
-    if tz:
-        st.session_state.user_timezone = tz
-    else:
-        st.session_state.user_timezone = "UTC"
+import streamlit.components.v1 as components
 
-# Safe fallback to pytz object
+# Detect timezone via JS only once
+if "user_timezone" not in st.session_state:
+    components.html(
+        """
+        <script>
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const streamlitDoc = window.parent.document;
+        streamlitDoc.dispatchEvent(new CustomEvent("GET_TZ", { detail: tz }));
+        </script>
+        """,
+        height=0,
+    )
+
+    # Listen for the timezone message via JS -> Python bridge
+    from streamlit.runtime.scriptrunner import add_script_run_ctx
+    import threading
+
+    def listen_for_tz():
+        import time
+        time.sleep(1)
+        if "user_timezone" not in st.session_state:
+            st.session_state.user_timezone = "UTC"
+
+    threading.Thread(target=listen_for_tz).start()
+
+    def set_tz():
+        tz = st.experimental_get_query_params().get("tz")
+        if tz:
+            st.session_state.user_timezone = tz[0]
+
+    set_tz()
+
+# Fallback timezone
 user_tz_str = st.session_state.get("user_timezone", "UTC")
 try:
     user_tz = pytz.timezone(user_tz_str)

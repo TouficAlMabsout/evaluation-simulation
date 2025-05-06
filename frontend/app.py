@@ -41,12 +41,18 @@ def detect_timezone_from_ip():
         res = requests.get("https://ipapi.co/json/")
         if res.status_code == 200:
             data = res.json()
-            st.write("🌍 IP Geolocation Data:", data)  # <-- For debug
+            # ⬅️ Print visibly at the top of the screen
+            st.markdown(f"### 🌍 Detected Timezone: `{data.get('timezone', 'N/A')}`")
+            st.markdown(f"`IP: {data.get('ip', 'N/A')} - City: {data.get('city', 'N/A')} - Region: {data.get('region', 'N/A')} - Country: {data.get('country_name', 'N/A')}`")
+            st.session_state.timezone_debug_data = data  # optional full data
             return pytz.timezone(data.get("timezone", "UTC"))
+        else:
+            st.markdown(f"❌ Timezone detection failed: HTTP {res.status_code}")
     except Exception as e:
-        st.write("❌ Failed to fetch timezone:", str(e))  # <-- For debug
+        st.markdown(f"❌ Timezone detection error: `{e}`")
     return pytz.timezone("UTC")  # fallback
 
+# Run once per session
 if "user_tz" not in st.session_state:
     st.session_state.user_tz = detect_timezone_from_ip()
 

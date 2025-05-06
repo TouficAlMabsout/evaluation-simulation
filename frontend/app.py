@@ -14,6 +14,24 @@ from data_store import load_conversations, save_single_conversation, load_datase
 # Load environment variables
 load_dotenv()
 
+
+MODEL_OPTIONS = {
+    "claude": [
+        "claude-3-haiku-20240307",
+        "claude-3-sonnet-20240229",
+        "claude-3-opus-20240229"
+    ],
+    "openai": [
+        "gpt-3.5-turbo",
+        "gpt-4",
+        "gpt-4-turbo"
+    ],
+    "gemini": [
+        "gemini-pro"
+    ]
+}
+
+
 # ------------------------------
 # 🔹 Detect and store user's timezone (once per session)
 # ------------------------------
@@ -173,7 +191,9 @@ with pagination_cols[1]:
 st.markdown("### Simulate All Conversations in This Dataset")
 
 selected_prompt = st.selectbox("Select Prompt", [""] + st.session_state.prompt_list, key="dataset_prompt")
-selected_model = st.selectbox("Select Model", ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"], key="dataset_model")
+selected_family = st.selectbox("Select Model Family", list(MODEL_OPTIONS.keys()), key="model_family")
+selected_submodel = st.selectbox("Select Submodel", MODEL_OPTIONS[selected_family], key="submodel")
+selected_model = f"{selected_family}:{selected_submodel}"
 
 if selected_prompt and selected_prompt not in st.session_state.prompt_vars_cache:
     st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
@@ -188,6 +208,7 @@ if st.button("Simulate All"):
     if not selected_prompt:
         st.warning("Please select a prompt before running simulation.")
     else:
+        failed = []
         for convo in filtered_conversations:
             json_payload = json.dumps(convo["content"])
             files = {"file": ("chat.json", json_payload, "application/json")}
@@ -209,10 +230,15 @@ if st.button("Simulate All"):
                     })
                     save_single_conversation(convo, st.session_state.dataset_name)
                 else:
-                    st.warning(f"Error simulating chat {convo['conversation_id']}: {res.status_code}")
+                    failed.append((convo["conversation_id"], res.status_code, res.text))
+                    st.error(f"❌ Error simulating chat {convo['conversation_id']}: {res.status_code} - {res.text}")
             except Exception as e:
-                st.warning(f"Simulation failed for chat {convo['conversation_id']}: {e}")
-        st.success("All conversations simulated successfully.")
+                failed.append((convo["conversation_id"], "Exception", str(e)))
+                st.error(f"❌ Exception simulating chat {convo['conversation_id']}: {e}")
+        if failed:
+            st.warning(f"{len(failed)} conversation(s) failed.")
+        else:
+            st.success("All conversations simulated successfully.")
 
 # ---------- Header Row ----------
 st.divider()
@@ -283,7 +309,12 @@ for convo in displayed:
         st.subheader(f"New Simulation - {convo['conversation_id']}")
 
         selected_prompt = st.selectbox("Select Prompt", [""] + st.session_state.prompt_list, key=f"prompt_{convo['conversation_id']}")
-        selected_model = st.selectbox("Select Model", ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"], key=f"model_{convo['conversation_id']}")
+        family_key = f"{convo['conversation_id']}_model_family"
+        submodel_key = f"{convo['conversation_id']}_submodel"
+
+        selected_family = st.selectbox("Select Model Family", list(MODEL_OPTIONS.keys()), key=family_key)
+        selected_submodel = st.selectbox("Select Submodel", MODEL_OPTIONS[selected_family], key=submodel_key)
+        selected_model = f"{selected_family}:{selected_submodel}"
 
         if selected_prompt and selected_prompt not in st.session_state.prompt_vars_cache:
             st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
@@ -306,7 +337,9 @@ for convo in displayed:
                         "model_name": selected_model,
                         "variables_json": json.dumps(variable_values)
                     }
+
                     res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+
                     if res.status_code == 200:
                         output = res.json()
                         convo["results"].append({
@@ -317,15 +350,16 @@ for convo in displayed:
                             "output": output
                         })
                         save_single_conversation(convo, st.session_state.dataset_name)
-                        st.success("Simulation completed.")
+                        st.success("✅ Simulation completed.")
                         st.session_state.open_analyze_id = None
                     else:
-                        st.error(f"Error {res.status_code}: {res.text}")
+                        st.error(f"❌ Error simulating chat {convo['conversation_id']}: {res.status_code} - {res.text}")
+
                 except Exception as e:
-                    st.error(f"Error during simulation: {e}")
-    
+                    st.error(f"❌ Exception during simulation of chat {convo['conversation_id']}: {e}")
+                    
     if st.session_state.get("open_details_id") == convo["conversation_id"]:
-        st.markdown(f"#### Chat Details – {convo['conversation_id']}")
+        st.markdown(f"#### Chat Details - {convo['conversation_id']}")
 
         for msg in convo["content"]:
             if msg["role"] == "human":

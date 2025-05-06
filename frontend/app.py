@@ -80,6 +80,17 @@ def fetch_prompt_variables(prompt_id):
     except:
         return []
 
+def is_within_range(convo_date):
+    try:
+        convo_dt = datetime.fromisoformat(convo_date.replace("Z", "+00:00")).date()
+        if start_date and convo_dt < start_date:
+            return False
+        if end_date and convo_dt > end_date:
+            return False
+        return True
+    except:
+        return False
+
 # Fetch prompts only once
 if not st.session_state.prompt_list:
     st.session_state.prompt_list = fetch_prompt_list()
@@ -156,15 +167,21 @@ if st.button("⟳ Refresh Conversations"):
 
 conversations = st.session_state.conversations
 with st.expander("Filter Options"):
-    date_filter = st.date_input("Filter by Date", value=None, key="date_filter")
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("Start Date (optional)", value=None, key="start_date")
+    with col2:
+        end_date = st.date_input("End Date (optional)", value=None, key="end_date")
+
+    if start_date and end_date and start_date > end_date:
+        st.error("Start date cannot be after end date.")
 
 per_page = 3
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
 filtered_conversations = [
-    c for c in st.session_state.conversations
-    if not date_filter or c["date_of_report"].startswith(str(date_filter))
+    c for c in st.session_state.conversations if is_within_range(c["date_of_report"])
 ]
 
 total_pages = max(1,ceil(len(filtered_conversations) / per_page))

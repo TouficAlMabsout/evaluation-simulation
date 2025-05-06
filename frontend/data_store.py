@@ -5,11 +5,8 @@ from firebase_admin import credentials, firestore
 import os
 
 # Firebase Admin Init
-SERVICE_KEY_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "service_keys",
-    "chatcc-evaluation-firebase-adminsdk-fbsvc-9ed0aadefe.json"
-)
+SERVICE_KEY_PATH = "/etc/secrets/firebase-key.json"
+
 if not firebase_admin._apps:
     cred = credentials.Certificate(SERVICE_KEY_PATH)
     firebase_admin.initialize_app(cred)

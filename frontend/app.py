@@ -167,31 +167,34 @@ for var in prompt_vars:
     dataset_variable_values[var] = val if val.strip() else ""
 
 if st.button("Simulate All"):
-    for convo in filtered_conversations:
-        json_payload = json.dumps(convo["content"])
-        files = {"file": ("chat.json", json_payload, "application/json")}
-        data = {
-            "prompt_id": selected_prompt,
-            "model_name": selected_model,
-            "variables_json": json.dumps(dataset_variable_values)
-        }
-        try:
-            res = requests.post("http://localhost:8000/simulate", files=files, data=data)
-            if res.status_code == 200:
-                output = res.json()
-                convo["results"].append({
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                    "prompt_id": selected_prompt,
-                    "model": selected_model,
-                    "variables": dataset_variable_values,
-                    "output": output
-                })
-                save_single_conversation(convo, st.session_state.dataset_name)
-            else:
-                st.warning(f"Error simulating chat {convo['conversation_id']}: {res.status_code}")
-        except Exception as e:
-            st.warning(f"Simulation failed for chat {convo['conversation_id']}: {e}")
-    st.success("All conversations simulated successfully.")
+    if not selected_prompt:
+        st.warning("Please select a prompt before running simulation.")
+    else:
+        for convo in filtered_conversations:
+            json_payload = json.dumps(convo["content"])
+            files = {"file": ("chat.json", json_payload, "application/json")}
+            data = {
+                "prompt_id": selected_prompt,
+                "model_name": selected_model,
+                "variables_json": json.dumps(dataset_variable_values)
+            }
+            try:
+                res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+                if res.status_code == 200:
+                    output = res.json()
+                    convo["results"].append({
+                        "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        "prompt_id": selected_prompt,
+                        "model": selected_model,
+                        "variables": dataset_variable_values,
+                        "output": output
+                    })
+                    save_single_conversation(convo, st.session_state.dataset_name)
+                else:
+                    st.warning(f"Error simulating chat {convo['conversation_id']}: {res.status_code}")
+            except Exception as e:
+                st.warning(f"Simulation failed for chat {convo['conversation_id']}: {e}")
+        st.success("All conversations simulated successfully.")
 
 # ---------- Header Row ----------
 st.divider()
@@ -272,31 +275,34 @@ for convo in displayed:
             variable_values[var] = val if val.strip() else ""
 
         if st.button("Simulate", key=f"run_{convo['conversation_id']}"):
-            try:
-                json_payload = json.dumps(convo["content"])
-                files = {"file": ("chat.json", json_payload, "application/json")}
-                data = {
-                    "prompt_id": selected_prompt,
-                    "model_name": selected_model,
-                    "variables_json": json.dumps(variable_values)
-                }
-                res = requests.post("http://localhost:8000/simulate", files=files, data=data)
-                if res.status_code == 200:
-                    output = res.json()
-                    convo["results"].append({
-                        "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            if not selected_prompt:
+                st.warning("Please select a prompt before running simulation.")
+            else:
+                try:
+                    json_payload = json.dumps(convo["content"])
+                    files = {"file": ("chat.json", json_payload, "application/json")}
+                    data = {
                         "prompt_id": selected_prompt,
-                        "model": selected_model,
-                        "variables": variable_values,
-                        "output": output
-                    })
-                    save_single_conversation(convo, st.session_state.dataset_name)
-                    st.success("Simulation completed.")
-                    st.session_state.open_analyze_id = None
-                else:
-                    st.error(f"Error {res.status_code}: {res.text}")
-            except Exception as e:
-                st.error(f"Error during simulation: {e}")
+                        "model_name": selected_model,
+                        "variables_json": json.dumps(variable_values)
+                    }
+                    res = requests.post("http://localhost:8000/simulate", files=files, data=data)
+                    if res.status_code == 200:
+                        output = res.json()
+                        convo["results"].append({
+                            "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                            "prompt_id": selected_prompt,
+                            "model": selected_model,
+                            "variables": variable_values,
+                            "output": output
+                        })
+                        save_single_conversation(convo, st.session_state.dataset_name)
+                        st.success("Simulation completed.")
+                        st.session_state.open_analyze_id = None
+                    else:
+                        st.error(f"Error {res.status_code}: {res.text}")
+                except Exception as e:
+                    st.error(f"Error during simulation: {e}")
     
     if st.session_state.get("open_details_id") == convo["conversation_id"]:
         st.markdown(f"#### Chat Details – {convo['conversation_id']}")

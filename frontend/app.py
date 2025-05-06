@@ -34,9 +34,23 @@ MODEL_OPTIONS = {
 
 
 # ------------------------------
-# 🔹 Detect and store user's timezone (once per session)
+# 🔹 Detect and store user's timezone (via IP lookup)
 # ------------------------------
-user_tz = pytz.timezone("Asia/Dubai")
+def detect_timezone_from_ip():
+    try:
+        res = requests.get("https://ipapi.co/json/")
+        if res.status_code == 200:
+            data = res.json()
+            st.write("🌍 IP Geolocation Data:", data)  # <-- For debug
+            return pytz.timezone(data.get("timezone", "UTC"))
+    except Exception as e:
+        st.write("❌ Failed to fetch timezone:", str(e))  # <-- For debug
+    return pytz.timezone("UTC")  # fallback
+
+if "user_tz" not in st.session_state:
+    st.session_state.user_tz = detect_timezone_from_ip()
+
+user_tz = st.session_state.user_tz
 
 # Init session state
 if "dataset_name" not in st.session_state:

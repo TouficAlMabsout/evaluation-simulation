@@ -351,7 +351,7 @@ for convo in displayed:
                             "output": output
                         })
                         save_single_conversation(convo, st.session_state.dataset_name)
-                        st.success("✅ Simulation completed.")
+                        st.success("Simulation completed.")
                         st.session_state.open_analyze_id = None
                     else:
                         st.error(f"❌ Error simulating chat {convo['conversation_id']}: {res.status_code} - {res.text}")

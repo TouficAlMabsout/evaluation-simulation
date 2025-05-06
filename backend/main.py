@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 import re
 from fastapi import Query
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -98,6 +99,10 @@ def list_prompts():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch prompts: {str(e)}")
+
+@app.get("/")
+def read_root():
+    return JSONResponse({"message": "Evaluation Simulation backend is live!"})
 
 @app.get("/prompt-variables")
 def get_prompt_variables(prompt_id: str = Query(...)):

@@ -27,7 +27,8 @@ MODEL_OPTIONS = {
         "gpt-4-turbo"
     ],
     "gemini": [
-        "gemini-pro"
+        "models/gemini-1.5-pro-latest", 
+        "models/gemini-1.5-flash-latest"
     ]
 }
 

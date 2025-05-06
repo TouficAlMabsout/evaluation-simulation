@@ -7,11 +7,29 @@ import json
 from datetime import datetime
 from math import ceil
 import sys, os
+import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
 
 # Load environment variables
 load_dotenv()
+
+# ------------------------------
+# 🔹 Detect and store user's timezone (once per session)
+# ------------------------------
+if "user_timezone" not in st.session_state:
+    try:
+        res = requests.get("https://ipapi.co/json/")
+        if res.status_code == 200:
+            tz = res.json().get("timezone", "UTC")
+            st.session_state.user_timezone = tz
+        else:
+            st.session_state.user_timezone = "UTC"
+    except:
+        st.session_state.user_timezone = "UTC"
+
+# Safe timezone object
+user_tz = pytz.timezone(st.session_state.user_timezone)
 
 # Init session state
 if "dataset_name" not in st.session_state:
@@ -212,7 +230,8 @@ for convo in displayed:
     cols[1].write(convo["username"])
     try:
         dt_obj = datetime.fromisoformat(convo["date_of_report"].replace("Z", "+00:00"))
-        formatted_time = dt_obj.strftime("%b %d, %Y - %I:%M %p")
+        local_time = dt_obj.astimezone(user_tz)
+        formatted_time = local_time.strftime("%b %d, %Y - %I:%M %p")
     except:
         formatted_time = convo["date_of_report"]
     cols[2].write(formatted_time)
@@ -244,7 +263,8 @@ for convo in displayed:
             for res in sorted(convo["results"], key=lambda r: r["time"], reverse=True):
                 try:
                     dt_obj = datetime.fromisoformat(res["time"])
-                    formatted_time = dt_obj.strftime("%b %d, %Y - %I:%M %p")
+                    local_time = dt_obj.astimezone(user_tz)
+                    formatted_time = local_time.strftime("%b %d, %Y - %I:%M %p")
                 except:
                     formatted_time = res["time"]
                 st.markdown(f"- **Time**: {formatted_time}  \n**Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n**Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)

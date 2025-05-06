@@ -41,35 +41,33 @@ MODEL_OPTIONS = {
 # Detect timezone only once per session
 import streamlit.components.v1 as components
 
-import streamlit.components.v1 as components
 
-# ✅ Step 1: Inject timezone into the URL once
-if "user_timezone" not in st.session_state:
+# Step 1: Inject timezone using JS (only if ?tz is missing)
+if "tz" not in st.query_params:
     components.html(
         """
         <script>
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const qs = new URLSearchParams(window.location.search);
-        if (!qs.has("tz")) {
-            qs.set("tz", tz);
-            window.location.search = "?" + qs.toString();  // Reloads the page with tz param
-        }
+        const params = new URLSearchParams(window.location.search);
+        params.set("tz", tz);
+        window.location.search = "?" + params.toString();
         </script>
         """,
         height=0,
     )
+    st.stop()  # prevent rest of app from running until reload
 
-# ✅ Step 2: Read from query params
-if "user_timezone" not in st.session_state:
-    tz_from_url = st.query_params.get("tz")
-    if tz_from_url:
-        st.session_state.user_timezone = tz_from_url
+# Step 2: Read from query param and save
+tz_param = st.query_params.get("tz")
+if tz_param and "user_timezone" not in st.session_state:
+    st.session_state.user_timezone = tz_param
 
-# ✅ Step 3: Manual fallback
-if "user_timezone" not in st.session_state:
-    st.session_state.user_timezone = st.selectbox("Select your timezone", pytz.all_timezones)
+# Step 3: Manual fallback (user override)
+if "user_timezone" not in st.session_state or st.session_state.user_timezone == "UTC":
+    selected_tz = st.selectbox("Couldn't detect timezone automatically. Please select it:", pytz.all_timezones)
+    st.session_state.user_timezone = selected_tz
 
-# ✅ Step 4: Convert to pytz object
+# Step 4: Load tz object
 try:
     user_tz = pytz.timezone(st.session_state.user_timezone)
 except pytz.UnknownTimeZoneError:

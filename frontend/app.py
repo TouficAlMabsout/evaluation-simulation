@@ -37,27 +37,33 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone (via IP lookup)
 # ------------------------------
 # 🔹 Get browser timezone using JS
-from streamlit_js_eval import streamlit_js_eval
+import streamlit.components.v1 as components
 
-if "user_tz" not in st.session_state:
-    js_tz = streamlit_js_eval(
-        js_expressions="Intl.DateTimeFormat().resolvedOptions().timeZone",
-        key="get_tz",
-        label="Detecting timezone from browser"
+if "tz" not in st.query_params:
+    components.html(
+        """
+        <script>
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const params = new URLSearchParams(window.location.search);
+        params.set("tz", tz);
+        window.location.search = "?" + params.toString();
+        </script>
+        """,
+        height=0,
     )
+    st.stop()
 
-    st.write(f"🧪 JavaScript timezone detected: `{js_tz}`")
-
-    if js_tz:
-        try:
-            st.session_state.user_tz = pytz.timezone(js_tz)
-            st.success(f"🌍 Timezone set to: `{js_tz}`")
-        except pytz.UnknownTimeZoneError:
-            st.warning(f"⚠️ Unknown timezone `{js_tz}` — defaulting to Asia/Dubai")
-            st.session_state.user_tz = pytz.timezone("Asia/Dubai")
-    else:
-        st.warning("⚠️ Could not detect timezone — defaulting to Asia/Dubai")
+# Now safely load
+tz_param = st.query_params.get("tz")
+if tz_param and "user_tz" not in st.session_state:
+    try:
+        st.session_state.user_tz = pytz.timezone(tz_param)
+        st.success(f"🌍 Timezone set to: `{tz_param}`")
+    except pytz.UnknownTimeZoneError:
+        st.warning(f"⚠️ Unknown timezone `{tz_param}` — using Asia/Dubai")
         st.session_state.user_tz = pytz.timezone("Asia/Dubai")
+elif "user_tz" not in st.session_state:
+    st.session_state.user_tz = pytz.timezone("Asia/Dubai")
 
 user_tz = st.session_state.user_tz
 st.info(f"📌 Final timezone in use: `{user_tz.zone}`")

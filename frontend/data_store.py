@@ -2,20 +2,22 @@
 
 import firebase_admin
 from firebase_admin import credentials, firestore
+import json
 import os
+from io import StringIO
 
-# Firebase Admin Init
-SERVICE_KEY_PATH = "/etc/secrets/firebase-key.json"
+from streamlit.runtime.secrets import secrets  # Optional, for future fallback
+
+FIREBASE_CREDENTIALS_JSON = os.getenv("FIREBASE_CREDENTIALS_JSON")
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate(SERVICE_KEY_PATH)
-    firebase_admin.initialize_app(cred)
+    cred = credentials.Certificate(json.load(StringIO(FIREBASE_CREDENTIALS_JSON)))
 
 db = firestore.client()
 ROOT_COLLECTION = "chat_reports"
 
 # ------------------------------
-# 🔹 New: Load available dataset names
+# 🔹 New: Load available dataset names  
 # ------------------------------
 def load_dataset_names():
     collections = db.collection(ROOT_COLLECTION).list_documents()

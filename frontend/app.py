@@ -40,7 +40,12 @@ MODEL_OPTIONS = {
 from streamlit_js_eval import streamlit_js_eval
 
 if "user_tz" not in st.session_state:
-    js_tz = streamlit_js_eval("Intl.DateTimeFormat().resolvedOptions().timeZone", key="get_tz")
+    js_tz = streamlit_js_eval(
+        js_expressions="Intl.DateTimeFormat().resolvedOptions().timeZone",
+        key="get_tz",
+        label="Detecting timezone from browser"
+    )
+
     st.write(f"🧪 JavaScript timezone detected: `{js_tz}`")
 
     if js_tz:
@@ -56,6 +61,7 @@ if "user_tz" not in st.session_state:
 
 user_tz = st.session_state.user_tz
 st.info(f"📌 Final timezone in use: `{user_tz.zone}`")
+
 
 
 # Init session state

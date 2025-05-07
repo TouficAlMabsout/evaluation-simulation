@@ -45,7 +45,7 @@ tz = st_javascript("""
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     return timezone;
 """)
-st.write("value of tz: "+tz)
+st.write("value of tz: ", tz)
 if tz:
     st.session_state.user_timezone = tz
 else:

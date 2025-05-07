@@ -36,24 +36,55 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
-from streamlit_javascript import st_javascript
-st.title("🌍 Working Timezone Detection via JS")
 
-tz = st_javascript("""
-    await (async () => {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        return timezone;
-    })()
-""")
+st.title("🌐 Auto Timezone Detection via JS")
 
-st.write("🧪 JS-Detected Timezone:", tz)
-
-if isinstance(tz, str) and tz:
-    st.session_state.user_timezone = tz
-else:
+# Session flag so we don’t overwrite it later
+if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "UTC"
 
-st.success("✅ Final Detected Timezone: " + st.session_state.user_timezone)
+# Inject JS that sends timezone via postMessage
+components.html(
+    """
+    <script>
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        window.parent.postMessage(
+            { type: "streamlit_timezone", timezone: tz },
+            "*"
+        );
+    </script>
+    """,
+    height=0,
+)
+
+# JS listener inside Streamlit to receive the timezone
+timezone_js = """
+<script>
+    window.addEventListener("message", (event) => {
+        if (event.data.type === "streamlit_timezone") {
+            const tz = event.data.timezone;
+            const input = window.parent.document.querySelector('input[data-testid="stTextInput"][id$="hidden_timezone"]');
+            if (input) {
+                input.value = tz;
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+        }
+    });
+</script>
+"""
+
+# Hidden input field Streamlit can read from
+st.markdown('<input type="text" id="hidden_timezone" name="hidden_timezone" style="display:none;">', unsafe_allow_html=True)
+st.markdown(timezone_js, unsafe_allow_html=True)
+
+# Streamlit reads from the invisible input
+detected = st.text_input("Hidden TZ", key="hidden_timezone", label_visibility="collapsed")
+
+if detected:
+    st.session_state.user_timezone = detected
+
+st.write("✅ Detected Timezone:", st.session_state.user_timezone)
+
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

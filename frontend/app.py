@@ -36,27 +36,18 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
-st.title("🌐 Browser Timezone Detection (Stable Hack)")
+from streamlit_javascript import st_javascript
 
-# Hidden input to receive the timezone
-tz_value = st.text_input("Your Timezone", key="tzbox", label_visibility="collapsed")
+st.title("Timezone Detection (Final)")
 
-# Inject JS to write timezone into the hidden input
-st.markdown("""
-<script>
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const input = window.parent.document.querySelector('input[data-testid="stTextInput"][id$="tzbox"]');
-    if (input) input.value = tz;
-    const event = new Event('input', { bubbles: true });
-    input.dispatchEvent(event);
-</script>
-""", unsafe_allow_html=True)
+if "user_timezone" not in st.session_state:
+    tz = st_javascript("await Intl.DateTimeFormat().resolvedOptions().timeZone")
+    if tz:
+        st.session_state.user_timezone = tz
+    else:
+        st.session_state.user_timezone = "UTC"
 
-if tz_value:
-    st.success(f"✅ Detected Timezone: {tz_value}")
-    st.session_state.user_timezone = tz_value
-else:
-    st.info("⌛ Waiting for browser to send timezone...")
+st.write("🕒 Final Detected Timezone:", st.session_state.get("user_timezone"))
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

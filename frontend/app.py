@@ -43,10 +43,11 @@ timezone = st_javascript("""await (async () => {
             console.log(userTimezone)
             return userTimezone
 })().then(returnValue => returnValue)""")
-st.write(timezone)
+
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
-
+else:
+    st.session_state.user_timezone = timezone
 user_tz_str = st.session_state.get("user_timezone", "Asia/Dubai")
 try:
     user_tz = pytz.timezone(user_tz_str)

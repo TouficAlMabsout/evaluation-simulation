@@ -318,7 +318,7 @@ for convo in displayed:
                 for k, v in res["variables"].items():
                     color = "#ff4d4d" if v == "" else "#ccc"
                     value = "<em>(missing)</em>" if v == "" else v
-                    st.markdown(f"<div style='margin-left: 20px;'><strong style='color:#f0f0f0;'>{k}:</strong> <span style='color:{color};'>{value}</span></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='margin-left: 20px;'><strong style='color:#333;'>{k}:</strong> <span style='color:{color};'>{value}</span></div>", unsafe_allow_html=True)
                 for m in res["output"]:
                     bubble_color = "#2a2d32" if m["role"] == "human" else "#1e4023"
                     st.markdown(f"<div style='background-color:{bubble_color}; padding:10px 15px; border-radius:10px; margin:8px 0; color:#f0f0f0;'><strong>{m['role'].capitalize()}:</strong><br>{m['content']}</div>", unsafe_allow_html=True)

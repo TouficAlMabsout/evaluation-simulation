@@ -37,25 +37,27 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
 # Inject JS to detect browser timezone and return it
-detected_tz = components.html(
+st.title("✅ Timezone Detection via HTML Component")
+
+# This injects JS that sets the timezone and returns it using Streamlit protocol
+timezone = components.html(
     """
     <script>
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    window.parent.postMessage(
-        {streamlitMessageType: "streamlit:setComponentValue", value: timezone},
-        "*"
-    );
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        window.parent.postMessage(
+            { streamlitMessageType: "streamlit:setComponentValue", value: tz },
+            "*"
+        );
     </script>
     """,
     height=0
 )
 
-# Display it once received
-if detected_tz:
-    st.write("✅ Browser Timezone Detected:", detected_tz)
+# Display the result returned
+if timezone:
+    st.write("🕒 Detected Timezone:", timezone)
 else:
     st.write("⌛ Waiting for browser to return timezone...")
-
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

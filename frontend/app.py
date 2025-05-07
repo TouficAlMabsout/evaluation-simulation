@@ -39,22 +39,19 @@ MODEL_OPTIONS = {
 from streamlit_javascript import st_javascript
 st.title("🧪 Timezone Detection Debug")
 
-js_code = """
-const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-console.log("🕒 Detected timezone:", tz);
-tz
-"""
+st.title("🌍 Final Timezone Detection Fix")
 
-result = st_javascript(f"await (async () => {{ {js_code} }})()")
+tz = st_javascript("""
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return timezone;
+""")
 
-st.write("🔎 Raw result from JS:", result)
-
-if result:
-    st.session_state.user_timezone = result
+if tz:
+    st.session_state.user_timezone = tz
 else:
     st.session_state.user_timezone = "UTC"
 
-st.write("🕒 Final Detected Timezone:", st.session_state.user_timezone)
+st.write("✅ Final Detected Timezone:", st.session_state.user_timezone)
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

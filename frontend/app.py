@@ -36,31 +36,27 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
-st.title("✅ Browser Timezone Detection Test")
+st.title("🌐 Browser Timezone Detection (Stable Hack)")
 
-# Create a placeholder to host the component and capture the value
-placeholder = st.empty()
+# Hidden input to receive the timezone
+tz_value = st.text_input("Your Timezone", key="tzbox", label_visibility="collapsed")
 
-# This JS sends the timezone to Streamlit using the required postMessage protocol
-detected_tz = placeholder.html(
-    """
-    <script>
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        window.parent.postMessage({
-            streamlitMessageType: "streamlit:setComponentValue",
-            value: timezone
-        }, "*");
-    </script>
-    """,
-    height=0
-)
+# Inject JS to write timezone into the hidden input
+st.markdown("""
+<script>
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const input = window.parent.document.querySelector('input[data-testid="stTextInput"][id$="tzbox"]');
+    if (input) input.value = tz;
+    const event = new Event('input', { bubbles: true });
+    input.dispatchEvent(event);
+</script>
+""", unsafe_allow_html=True)
 
-# Now show the actual value
-if isinstance(detected_tz, str):
-    st.success(f"✅ Browser Timezone: {detected_tz}")
-    st.session_state.user_timezone = detected_tz
+if tz_value:
+    st.success(f"✅ Detected Timezone: {tz_value}")
+    st.session_state.user_timezone = tz_value
 else:
-    st.info("⌛ Waiting for browser to return timezone...")
+    st.info("⌛ Waiting for browser to send timezone...")
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

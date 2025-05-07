@@ -13,7 +13,7 @@ from data_store import load_conversations, save_single_conversation, load_datase
 # Load environment variables
 import streamlit.components.v1 as components
 # Add this import at the top of your file
-from timezone_detection import get_user_timezone, convert_to_local_time
+from streamlit_javascript import st_javascript
 load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL")
@@ -38,7 +38,12 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
-user_tz = get_user_timezone()
+timezone = st_javascript("""await (async () => {
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            console.log(userTimezone)
+            return userTimezone
+})().then(returnValue => returnValue)""")
+st.write(timezone)
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

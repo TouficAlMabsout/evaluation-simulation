@@ -11,6 +11,7 @@ import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
 # Load environment variables
+import streamlit.components.v1 as components
 load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL")
@@ -35,20 +36,25 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
-def get_timezone_from_ip():
-    try:
-        res = requests.get("https://ipinfo.io/json")
-        if res.status_code == 200:
-            return res.json().get("timezone", "UTC")
-    except Exception as e:
-        st.write(f"Geolocation error: {e}")
-    return "UTC"
+# Inject JS to detect browser timezone and return it
+detected_tz = components.html(
+    """
+    <script>
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    window.parent.postMessage(
+        {streamlitMessageType: "streamlit:setComponentValue", value: timezone},
+        "*"
+    );
+    </script>
+    """,
+    height=0
+)
 
-# Test only: show detected timezone
-detected_timezone = get_timezone_from_ip()
-st.write("Detected Timezone:", detected_timezone)
-res = requests.get("https://ipinfo.io/json")
-st.write("Response JSON:", res.json())
+# Display it once received
+if detected_tz:
+    st.write("✅ Browser Timezone Detected:", detected_tz)
+else:
+    st.write("⌛ Waiting for browser to return timezone...")
 
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"

@@ -293,7 +293,9 @@ for convo in displayed:
         formatted_time = convo["date_of_report"]
     cols[2].write(formatted_time)
     cols[3].write(convo["conversation_id"])
+    _ = st.session_state.get(f"sim_refresh_{convo['conversation_id']}", 0)
     cols[4].write(str(len(convo.get("results", []))))
+
 
     if cols[5].button("View", key=f"view_{convo['conversation_id']}"):
         st.session_state.open_view_id = None if st.session_state.open_view_id == convo["conversation_id"] else convo["conversation_id"]
@@ -381,6 +383,7 @@ for convo in displayed:
                             "output": output
                         })
                         save_single_conversation(convo, st.session_state.dataset_name)
+                        st.session_state[f"sim_refresh_{convo['conversation_id']}"] = datetime.now().timestamp()
                         st.success("Simulation completed.")
                         st.session_state.open_analyze_id = None
                     else:

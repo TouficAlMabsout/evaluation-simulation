@@ -39,7 +39,7 @@ async def simulate(
     if prompt_id.strip() == "":
         raise HTTPException(status_code=400, detail="Prompt ID is missing. Please enter a LangSmith prompt ID.")
     if model_name.strip() == "":
-        raise HTTPException(status_code=400, detail="Claude model is not selected.")
+        raise HTTPException(status_code=400, detail="Model name is missing. Please select a model.")
 
     # Load uploaded JSON content
     try:
@@ -53,7 +53,6 @@ async def simulate(
             and isinstance(m["content"], str)
             for m in chat
         ):
-
             raise HTTPException(
                 status_code=400,
                 detail="Uploaded JSON must be a list of messages with 'role' ('human' or 'ai') and non-empty 'content'."
@@ -72,9 +71,18 @@ async def simulate(
     try:
         result = simulate_chat(chat, prompt_id, model_name, LANGSMITH_API_KEY, user_vars)
         return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Model or prompt error: {str(e)}")
+
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "rate limit" in err_msg or "exceeded" in err_msg or "overloaded" in err_msg:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit or quota exceeded for this model. Please try again later or switch models."}
+            )
+        raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 @app.get("/prompts")
 def list_prompts():
     try:

@@ -179,7 +179,7 @@ with st.expander("Filter Options"):
     if start_date and end_date and start_date > end_date:
         st.error("Start date cannot be after end date.")
 
-per_page = 3
+per_page = 10
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 

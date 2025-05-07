@@ -35,48 +35,6 @@ MODEL_OPTIONS = {
 # ------------------------------
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
-offset_map = {
-    -12: "Etc/GMT+12",
-    -11: "Pacific/Pago_Pago",
-    -10: "Pacific/Honolulu",
-    -9.5: "Pacific/Marquesas",
-    -9: "America/Anchorage",
-    -8: "America/Los_Angeles",
-    -7: "America/Denver",
-    -6: "America/Chicago",
-    -5: "America/New_York",
-    -4.5: "America/Caracas",
-    -4: "America/Halifax",
-    -3.5: "America/St_Johns",
-    -3: "America/Sao_Paulo",
-    -2: "America/Noronha",
-    -1: "Atlantic/Azores",
-     0: "UTC",
-     1: "Europe/Berlin",
-     2: "Europe/Kyiv",
-     3: "Asia/Riyadh",
-     3.5: "Asia/Tehran",
-     4: "Asia/Dubai",
-     4.5: "Asia/Kabul",
-     5: "Asia/Karachi",
-     5.5: "Asia/Kolkata",
-     5.75: "Asia/Kathmandu",
-     6: "Asia/Dhaka",
-     6.5: "Asia/Yangon",
-     7: "Asia/Bangkok",
-     8: "Asia/Shanghai",
-     8.75: "Australia/Eucla",
-     9: "Asia/Tokyo",
-     9.5: "Australia/Darwin",
-    10: "Australia/Sydney",
-    10.5: "Australia/Lord_Howe",
-    11: "Pacific/Noumea",
-    12: "Pacific/Auckland",
-    12.75: "Pacific/Chatham",
-    13: "Pacific/Tongatapu",
-    14: "Pacific/Kiritimati"
-}
-
 def get_timezone_from_ip():
     try:
         res = requests.get("https://ipinfo.io/json")
@@ -89,6 +47,8 @@ def get_timezone_from_ip():
 # Test only: show detected timezone
 detected_timezone = get_timezone_from_ip()
 st.write("Detected Timezone:", detected_timezone)
+res = requests.get("https://ipinfo.io/json")
+st.write("Response JSON:", res.json())
 
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"

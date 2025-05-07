@@ -72,15 +72,25 @@ if "prompt_list" not in st.session_state:
 def fetch_prompt_list():
     try:
         res = requests.get(f"{BACKEND_URL}/prompts")
-        return res.json() if res.status_code == 200 else []
-    except:
+        if res.status_code == 200:
+            return res.json()
+        else:
+            st.error(f"Failed to fetch prompts: {res.status_code} - {res.text}")
+            return []
+    except Exception as e:
+        st.error(f"Exception while fetching prompts: {e}")
         return []
 
 def fetch_prompt_variables(prompt_id):
     try:
         res = requests.get(f"{BACKEND_URL}/prompt-variables", params={"prompt_id": prompt_id})
-        return res.json().get("variables", []) if res.status_code == 200 else []
-    except:
+        if res.status_code == 200:
+            return res.json().get("variables", [])
+        else:
+            st.error(f"Failed to fetch variables for prompt {prompt_id}: {res.status_code} - {res.text}")
+            return []
+    except Exception as e:
+        st.error(f"Exception while fetching prompt variables: {e}")
         return []
 
 def is_within_range(convo_date):

@@ -47,8 +47,12 @@ def save_single_conversation(convo, dataset_name):
     if not dataset_name:
         raise ValueError("dataset_name is required to save conversation")
 
-    doc_ref = db.collection(ROOT_COLLECTION).document(dataset_name).collection("conversations").document(convo["conversation_id"])
-    doc_ref.set(convo)
+    try:
+        doc_ref = db.collection(ROOT_COLLECTION).document(dataset_name).collection("conversations").document(convo["conversation_id"])
+        doc_ref.set(convo)
+    except Exception as e:
+        print(f"[ERROR] Failed to save conversation {convo.get('conversation_id')} to dataset '{dataset_name}': {e}")
+        raise  # Optional: re-raise to bubble up or handle elsewhere
 
 # ------------------------------
 # 🔹 Optional: Save multiple conversations

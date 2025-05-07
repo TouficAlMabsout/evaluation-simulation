@@ -77,6 +77,19 @@ offset_map = {
     14: "Pacific/Kiritimati"
 }
 
+def get_timezone_from_ip():
+    try:
+        res = requests.get("https://ipinfo.io/json")
+        if res.status_code == 200:
+            return res.json().get("timezone", "UTC")
+    except Exception as e:
+        st.write(f"Geolocation error: {e}")
+    return "UTC"
+
+# Test only: show detected timezone
+detected_timezone = get_timezone_from_ip()
+st.write("Detected Timezone:", detected_timezone)
+
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

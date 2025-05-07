@@ -293,7 +293,6 @@ for convo in displayed:
         formatted_time = convo["date_of_report"]
     cols[2].write(formatted_time)
     cols[3].write(convo["conversation_id"])
-    _ = st.session_state.get(f"sim_refresh_{convo['conversation_id']}", 0)
     cols[4].write(str(len(convo.get("results", []))))
 
 
@@ -383,7 +382,6 @@ for convo in displayed:
                             "output": output
                         })
                         save_single_conversation(convo, st.session_state.dataset_name)
-                        st.session_state[f"sim_refresh_{convo['conversation_id']}"] = datetime.now().timestamp()
                         st.success("Simulation completed.")
                         st.session_state.open_analyze_id = None
                     else:

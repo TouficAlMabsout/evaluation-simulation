@@ -37,21 +37,23 @@ MODEL_OPTIONS = {
 # 🔹 Detect and store user's timezone based on local UTC offset
 # ------------------------------
 from streamlit_javascript import st_javascript
-st.title("🧪 Timezone Detection Debug")
-
-st.title("🌍 Final Timezone Detection Fix")
+st.title("🌍 Working Timezone Detection via JS")
 
 tz = st_javascript("""
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return timezone;
+    await (async () => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return timezone;
+    })()
 """)
-st.write("value of tz: ", tz)
-if tz:
+
+st.write("🧪 JS-Detected Timezone:", tz)
+
+if isinstance(tz, str) and tz:
     st.session_state.user_timezone = tz
 else:
     st.session_state.user_timezone = "UTC"
 
-st.write("✅ Final Detected Timezone:", st.session_state.user_timezone)
+st.success("✅ Final Detected Timezone: " + st.session_state.user_timezone)
 if "user_timezone" not in st.session_state:
     st.session_state.user_timezone = "Asia/Dubai"
 

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 import re
 from fastapi import Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 load_dotenv()
 
@@ -83,6 +83,7 @@ async def simulate(
                 content={"detail": "Rate limit or quota exceeded for this model. Please try again later or switch models."}
             )
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
+    
 @app.get("/prompts")
 def list_prompts():
     try:
@@ -111,6 +112,11 @@ def list_prompts():
 @app.get("/")
 def read_root():
     return JSONResponse({"message": "Evaluation Simulation backend is live!"})
+
+@app.head("/")
+async def root_head() -> Response:
+    # A HEAD response should contain headers only, no body
+    return Response(status_code=200)
 
 @app.get("/prompt-variables")
 def get_prompt_variables(prompt_id: str = Query(...)):

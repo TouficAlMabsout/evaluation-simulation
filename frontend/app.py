@@ -327,7 +327,7 @@ for convo in displayed:
         st.session_state.open_view_id = None
         st.session_state.open_details_id = None
 
-    if cols[0].button("🛈", key=f"details_{convo['conversation_id']}"):
+    if cols[0].button("ⓘ", key=f"details_{convo['conversation_id']}"):
         st.session_state.open_details_id = (
             None if st.session_state.get("open_details_id") == convo["conversation_id"]
             else convo["conversation_id"]

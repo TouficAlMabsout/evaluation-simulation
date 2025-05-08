@@ -5,8 +5,7 @@ import streamlit as st
 # ── NEW: tab title + emoji favicon ─────────────────────────────
 st.set_page_config(
     page_title="Evaluation Simulation",
-    page_icon="🤖",      # “simulation” loop symbol
-    layout="wide",
+    page_icon="🤖"     # “simulation” loop symbol
 )
 import requests
 from dotenv import load_dotenv

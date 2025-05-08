@@ -330,10 +330,20 @@ for convo in displayed:
                 except:
                     formatted_time = res["time"]
                 st.markdown(f"- **Time**: {formatted_time}  \n**Prompt ID**: <span style='color:#6cc644'>{res['prompt_id']}</span>  \n**Model**: <span style='color:#4fa3d1'>{res['model']}</span><br>**Variables:**", unsafe_allow_html=True)
-                for k, v in res["variables"].items():
-                    style = "opacity:0.5;" if v != "" else "color:#ff4d4d;"
-                    value = "<em>(missing)</em>" if v == "" else v
-                    st.markdown(f"<div style='margin-left: 20px;'><strong style='opacity:0.85;'>{k}:</strong> <span style='{style}'>{value}</span></div>", unsafe_allow_html=True)
+                # variables display
+                if res["variables"]:
+                    for k, v in res["variables"].items():
+                        style = "opacity:0.5;" if v != "" else "color:#ff4d4d;"
+                        value = "<em>(missing)</em>" if v == "" else v
+                        st.markdown(
+                            f"<div style='margin-left: 20px;'><strong style='opacity:0.85;'>{k}:</strong> <span style='{style}'>{value}</span></div>",
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.markdown(
+                        "<div style='margin-left:20px; opacity:0.5;'><em>No variables for this prompt.</em></div>",
+                        unsafe_allow_html=True,
+                    )
                 for m in res["output"]:
                     bubble_color = "#2a2d32" if m["role"] == "human" else "#1e4023"
                     st.markdown(f"<div style='background-color:{bubble_color}; padding:10px 15px; border-radius:10px; margin:8px 0; color:#f0f0f0;'><strong>{m['role'].capitalize()}:</strong><br>{m['content']}</div>", unsafe_allow_html=True)

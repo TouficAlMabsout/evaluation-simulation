@@ -1,6 +1,13 @@
 # ✅ Final optimized app.py (no more re-fetching on variable input)
 
 import streamlit as st
+
+# ── NEW: tab title + emoji favicon ─────────────────────────────
+st.set_page_config(
+    page_title="Evaluation Simulation",
+    page_icon="🔄",      # “simulation” loop symbol
+    layout="wide",
+)
 import requests
 from dotenv import load_dotenv
 import json

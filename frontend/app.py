@@ -275,7 +275,7 @@ if st.button("Simulate All"):
         st.rerun()
 
 # ---------- Header Row ----------
-col_sizes = [1, 4, 6, 8, 2, 2, 3] 
+col_sizes = [1, 4, 6, 6, 2, 2, 3] 
 st.divider()
 header_cols = st.columns(col_sizes)
 header_cols[1].markdown("**User**")

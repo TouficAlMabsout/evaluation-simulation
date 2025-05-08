@@ -384,9 +384,9 @@ for convo in displayed:
                         save_single_conversation(convo, st.session_state.dataset_name)
                         # 🔄 Trigger table refresh so Sim Count updates immediately
                         st.session_state[f"sim_refresh_{convo['conversation_id']}"] = datetime.utcnow().timestamp()
-                        st.rerun() 
                         st.success("Simulation completed.")
                         st.session_state.open_analyze_id = None
+                        st.rerun() 
                     else:
                         st.error(f"❌ Error simulating chat {convo['conversation_id']}: {res.status_code} - {res.text}")
 

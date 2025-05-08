@@ -457,6 +457,7 @@ for convo in displayed:
                 if st.button("⎚ Copy Without Results", key=f"copy_empty_{convo['conversation_id']}"):
                     duplicate_conversation(convo, target_dataset, clear_results=True)
                     st.success(f"Chat copied to '{target_dataset}' without results")
+st.divider()
 # Pagination
 pagination_cols = st.columns([2, 14, 2])
 with pagination_cols[0]:

@@ -305,7 +305,7 @@ for convo in displayed:
         st.session_state.open_analyze_id = None
         st.session_state.open_details_id = None
 
-    if cols[6].button("Simulate", key=f"analyze_{convo['conversation_id']}"):
+    if cols[6].button("Start", key=f"analyze_{convo['conversation_id']}"):
         st.session_state.open_analyze_id = None if st.session_state.open_analyze_id == convo["conversation_id"] else convo["conversation_id"]
         st.session_state.open_view_id = None
         st.session_state.open_details_id = None
@@ -361,7 +361,7 @@ for convo in displayed:
             val = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
             variable_values[var] = val if val.strip() else ""
 
-        if st.button("Simulate", key=f"run_{convo['conversation_id']}"):
+        if st.button("Run", key=f"run_{convo['conversation_id']}"):
             if not selected_prompt:
                 st.warning("Please select a prompt before running simulation.")
             else:

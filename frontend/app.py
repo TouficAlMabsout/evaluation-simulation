@@ -275,8 +275,9 @@ if st.button("Simulate All"):
         st.rerun()
 
 # ---------- Header Row ----------
+col_sizes = [1, 4, 6, 8, 2, 2, 3] 
 st.divider()
-header_cols = st.columns([2, 3, 7, 7, 3, 4, 5])
+header_cols = st.columns(col_sizes)
 header_cols[1].markdown("**User**")
 header_cols[2].markdown("**Submitted At**")
 header_cols[3].markdown("**Chat ID**")
@@ -286,7 +287,7 @@ header_cols[6].markdown("**Simulate**")
 
 # ---------- Individual Chat Rows ----------
 for convo in displayed:
-    cols = st.columns([2, 3, 7, 7, 3, 4, 5])
+    cols = st.columns(col_sizes)
     cols[1].write(convo["username"])
     try:
         dt_obj = datetime.fromisoformat(convo["date_of_report"].replace("Z", "+00:00"))

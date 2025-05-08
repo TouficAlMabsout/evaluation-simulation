@@ -1,12 +1,6 @@
-# ✅ Final optimized app.py (no more re-fetching on variable input)
+# pages/02_Chat_Page.py
 
 import streamlit as st
-
-# ── NEW: tab title + emoji favicon ─────────────────────────────
-st.set_page_config(
-    page_title="Evaluation Simulation",
-    page_icon="🤖"     # “simulation” loop symbol
-)
 import requests
 from dotenv import load_dotenv
 import json
@@ -14,15 +8,60 @@ from datetime import datetime
 from math import ceil
 import sys, os
 import pytz
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
 import time
-# Add this import at the top of your file
-from streamlit_javascript import st_javascript
-load_dotenv()
 
+# Fix import path for shared modules
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from data_store import load_conversations, save_single_conversation, load_dataset_names, delete_conversation, duplicate_conversation
+
+# Load environment variables (from root)
+load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL")
 
+# Set tab title
+st.set_page_config(
+    page_title="Evaluation Simulation",
+    page_icon="🤖"
+)
+
+# JavaScript timezone detection
+from streamlit_javascript import st_javascript
+timezone = st_javascript("""await (async () => {
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return userTimezone
+})().then(returnValue => returnValue)""")
+
+# Set timezone in session
+if "user_timezone" not in st.session_state:
+    st.session_state.user_timezone = timezone or "Asia/Dubai"
+user_tz_str = st.session_state.get("user_timezone", "Asia/Dubai")
+try:
+    user_tz = pytz.timezone(user_tz_str)
+except pytz.UnknownTimeZoneError:
+    user_tz = pytz.timezone("Asia/Dubai")
+
+# ✅ Ensure dataset_name is synced from selection page
+if "selected_dataset_name" in st.session_state:
+    st.session_state.dataset_name = st.session_state.selected_dataset_name
+
+# ⚠️ Fallback if no dataset selected
+if "dataset_name" not in st.session_state or not st.session_state.dataset_name:
+    st.error("No dataset selected. Please go back and select a dataset.")
+    st.stop()
+
+# Load conversations once
+if "conversations" not in st.session_state:
+    st.session_state.conversations = load_conversations(st.session_state.dataset_name)
+if "open_analyze_id" not in st.session_state:
+    st.session_state.open_analyze_id = None
+if "open_view_id" not in st.session_state:
+    st.session_state.open_view_id = None
+if "prompt_vars_cache" not in st.session_state:
+    st.session_state.prompt_vars_cache = {}
+if "prompt_list" not in st.session_state:
+    st.session_state.prompt_list = []
+
+# LLM options
 MODEL_OPTIONS = {
     "claude": [
         "claude-3-haiku-20240307",
@@ -40,50 +79,14 @@ MODEL_OPTIONS = {
     ]
 }
 
-# ------------------------------
-# 🔹 Detect and store user's timezone based on local UTC offset
-# ------------------------------
-timezone = st_javascript("""await (async () => {
-            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            console.log(userTimezone)
-            return userTimezone
-})().then(returnValue => returnValue)""")
-
-if "user_timezone" not in st.session_state:
-    st.session_state.user_timezone = "Asia/Dubai"
-else:
-    st.session_state.user_timezone = timezone
-user_tz_str = st.session_state.get("user_timezone", "Asia/Dubai")
-try:
-    user_tz = pytz.timezone(user_tz_str)
-except pytz.UnknownTimeZoneError:
-    user_tz = pytz.timezone("Asia/Dubai")
-# Init session state
-if "dataset_name" not in st.session_state:
-    dataset_names = load_dataset_names()
-    st.session_state.dataset_name = dataset_names[0] if dataset_names else ""
-if "conversations" not in st.session_state:
-    st.session_state.conversations = load_conversations(st.session_state.dataset_name)
-if "open_analyze_id" not in st.session_state:
-    st.session_state.open_analyze_id = None
-if "open_view_id" not in st.session_state:
-    st.session_state.open_view_id = None
-if "prompt_vars_cache" not in st.session_state:
-    st.session_state.prompt_vars_cache = {}
-if "prompt_list" not in st.session_state:
-    st.session_state.prompt_list = []
-
-# API fetch functions
+# Fetch prompt list (from backend API)
 def fetch_prompt_list():
     try:
         res = requests.get(f"{BACKEND_URL}/prompts")
         if res.status_code == 200:
             return res.json()
-        else:
-            st.error(f"Failed to fetch prompts: {res.status_code} - {res.text}")
-            return []
-    except Exception as e:
-        st.error(f"Exception while fetching prompts: {e}")
+        return []
+    except:
         return []
 
 def fetch_prompt_variables(prompt_id):
@@ -91,13 +94,11 @@ def fetch_prompt_variables(prompt_id):
         res = requests.get(f"{BACKEND_URL}/prompt-variables", params={"prompt_id": prompt_id})
         if res.status_code == 200:
             return res.json().get("variables", [])
-        else:
-            st.error(f"Failed to fetch variables for prompt {prompt_id}: {res.status_code} - {res.text}")
-            return []
-    except Exception as e:
-        st.error(f"Exception while fetching prompt variables: {e}")
+        return []
+    except:
         return []
 
+# Filtering helpers
 def is_within_range(convo_date):
     try:
         convo_dt = datetime.fromisoformat(convo_date.replace("Z", "+00:00")).date()
@@ -110,91 +111,27 @@ def is_within_range(convo_date):
         return False
 
 def matches_filters(convo):
-    """Return True only if the conversation satisfies ALL active filters."""
-    # 1️⃣ Date range
-    if not is_within_range(convo["date_of_report"]):
-        return False
-
-    # 2️⃣ User name (case-insensitive, substring match)
-    if user_filter.strip():
-        if user_filter.lower() not in convo.get("username", "").lower():
-            return False
-
-    # 3️⃣ Chat ID (substring match as well)
-    if chat_id_filter.strip():
-        if chat_id_filter.lower() not in convo.get("conversation_id", "").lower():
-            return False
-
+    if not is_within_range(convo["date_of_report"]): return False
+    if user_filter.strip() and user_filter.lower() not in convo.get("username", "").lower(): return False
+    if chat_id_filter.strip() and chat_id_filter.lower() not in convo.get("conversation_id", "").lower(): return False
     return True
 
-# Fetch prompts only once
-if not st.session_state.prompt_list:
-    st.session_state.prompt_list = fetch_prompt_list()
-
-# UI Setup
+# Title and back navigation
 st.title("Evaluation Dashboard")
-
-with st.expander("▦ Dataset Management"):
-    new_name = st.text_input("Create New Dataset", placeholder="Enter dataset name")
-    if st.button("✚ Create Dataset"):
-        try:
-            if new_name.strip() in load_dataset_names():
-                st.warning("A dataset with that name already exists.")
-            else:
-                create_dataset(new_name.strip())
-                st.success(f"Dataset '{new_name.strip()}' created successfully.")
-                st.rerun()
-        except Exception as e:
-            st.error(f"Failed to create dataset: {e}")
-
-    selected_for_deletion = st.selectbox("Delete Existing Dataset", load_dataset_names())
-    if st.button("🗑 Delete Selected Dataset"):
-        try:
-            delete_dataset(selected_for_deletion)
-            st.success(f"Dataset '{selected_for_deletion}' deleted.")
-            if selected_for_deletion == st.session_state.dataset_name:
-                st.session_state.dataset_name = ""
-            st.rerun()
-        except Exception as e:
-            st.error(f"Failed to delete dataset: {e}")
-    st.markdown("---")
-    st.markdown("**Rename Existing Dataset**")
-    rename_col1, rename_col2 = st.columns(2)
-    with rename_col1:
-        dataset_to_rename = st.selectbox("Select Dataset to Rename", load_dataset_names(), key="rename_source")
-    with rename_col2:
-        new_dataset_name = st.text_input("New Name", key="rename_target")
-
-    if st.button("✎ Rename Dataset"):
-        try:
-            if new_dataset_name.strip() in load_dataset_names():
-                st.warning("A dataset with that name already exists.")
-            else:
-                from data_store import rename_dataset
-                rename_dataset(dataset_to_rename, new_dataset_name.strip())
-                st.success(f"Dataset renamed to '{new_dataset_name.strip()}' successfully.")
-                if st.session_state.dataset_name == dataset_to_rename:
-                    st.session_state.dataset_name = new_dataset_name.strip()
-                st.rerun()
-        except Exception as e:
-            st.error(f"Failed to rename dataset: {e}")
-
-
-# Dataset selector
-dataset_names = load_dataset_names()
-if "dataset_name" not in st.session_state:
-    st.session_state.dataset_name = dataset_names[0] if dataset_names else ""
-
-selected_dataset = st.selectbox("Select Dataset", dataset_names, index=dataset_names.index(st.session_state.dataset_name) if st.session_state.dataset_name in dataset_names else 0)
-if selected_dataset != st.session_state.dataset_name:
-    st.session_state.dataset_name = selected_dataset
-    st.session_state.conversations = load_conversations(selected_dataset)
-    # Reset open tabs
+if st.button("← Back to Datasets"):
     st.session_state.open_analyze_id = None
     st.session_state.open_view_id = None
     st.session_state.open_details_id = None
-    st.rerun()
+    st.session_state.current_page = 1
+    st.session_state.start_date = None
+    st.session_state.end_date = None
+    st.session_state.user_filter = ""
+    st.session_state.chat_id_filter = ""
+    st.switch_page("01_Dataset_Page.py")
 
+# ✅ Prompt list fetch
+if not st.session_state.prompt_list:
+    st.session_state.prompt_list = fetch_prompt_list()
 
 if st.button("⟳ Refresh Conversations"):
     st.session_state.conversations = load_conversations(st.session_state.dataset_name)
@@ -235,8 +172,7 @@ displayed = filtered_conversations[start:end]
 if not displayed:
     st.warning("No conversations found with the current filters.")
 
-st.markdown("### Simulate All Conversations in This Dataset")
-
+st.markdown(f"### Simulate All – **{st.session_state.dataset_name}**")
 selected_prompt = st.selectbox("Select Prompt", [""] + st.session_state.prompt_list, key="dataset_prompt")
 selected_family = st.selectbox("Select Model Family", list(MODEL_OPTIONS.keys()), key="model_family")
 selected_submodel = st.selectbox("Select Submodel", MODEL_OPTIONS[selected_family], key="submodel")

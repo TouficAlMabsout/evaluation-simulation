@@ -103,6 +103,24 @@ def is_within_range(convo_date):
     except:
         return False
 
+def matches_filters(convo):
+    """Return True only if the conversation satisfies ALL active filters."""
+    # 1️⃣ Date range
+    if not is_within_range(convo["date_of_report"]):
+        return False
+
+    # 2️⃣ User name (case-insensitive, substring match)
+    if user_filter.strip():
+        if user_filter.lower() not in convo.get("username", "").lower():
+            return False
+
+    # 3️⃣ Chat ID (substring match as well)
+    if chat_id_filter.strip():
+        if chat_id_filter.lower() not in convo.get("conversation_id", "").lower():
+            return False
+
+    return True
+
 # Fetch prompts only once
 if not st.session_state.prompt_list:
     st.session_state.prompt_list = fetch_prompt_list()
@@ -182,19 +200,27 @@ with st.expander("Filter Options"):
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.date_input("Start Date (optional)", value=None, key="start_date")
+        # 🔹 NEW
+        user_filter = st.text_input("User (optional)", value="", key="user_filter")
     with col2:
-        end_date = st.date_input("End Date (optional)", value=None, key="end_date")
+        end_date   = st.date_input("End Date (optional)", value=None, key="end_date")
+        # 🔹 NEW
+        chat_id_filter = st.text_input("Chat ID (optional)", value="", key="chat_id_filter")
 
     if start_date and end_date and start_date > end_date:
         st.error("Start date cannot be after end date.")
+    
+    # ── NEW: reset to page 1 whenever any filter is active ──
+    if st.session_state.get("current_page", 1) != 1 and (
+        start_date or end_date or user_filter or chat_id_filter
+    ):
+        st.session_state.current_page = 1 
 
 per_page = 10
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-filtered_conversations = [
-    c for c in st.session_state.conversations if is_within_range(c["date_of_report"])
-]
+filtered_conversations = [c for c in st.session_state.conversations if matches_filters(c)]
 
 total_pages = max(1,ceil(len(filtered_conversations) / per_page))
 start = (st.session_state.current_page - 1) * per_page

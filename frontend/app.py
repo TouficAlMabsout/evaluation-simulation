@@ -457,20 +457,20 @@ for convo in displayed:
                 if st.button("⎚ Copy Without Results", key=f"copy_empty_{convo['conversation_id']}"):
                     duplicate_conversation(convo, target_dataset, clear_results=True)
                     st.success(f"Chat copied to '{target_dataset}' without results")
-    # Pagination
-    pagination_cols = st.columns([2, 14, 2])
-    with pagination_cols[0]:
-        if st.button("\u25C0 Prev") and st.session_state.current_page > 1:
-            st.session_state.current_page -= 1
-            st.rerun()
-            
-    with pagination_cols[2]:
-        if st.button("Next \u25B6") and st.session_state.current_page < total_pages:
-            st.session_state.current_page += 1
-            st.rerun()
+# Pagination
+pagination_cols = st.columns([2, 14, 2])
+with pagination_cols[0]:
+    if st.button("\u25C0 Prev") and st.session_state.current_page > 1:
+        st.session_state.current_page -= 1
+        st.rerun()
+        
+with pagination_cols[2]:
+    if st.button("Next \u25B6") and st.session_state.current_page < total_pages:
+        st.session_state.current_page += 1
+        st.rerun()
 
-    with pagination_cols[1]:
-        st.markdown(f"<div style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
+with pagination_cols[1]:
+    st.markdown(f"<div style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
 
 
 

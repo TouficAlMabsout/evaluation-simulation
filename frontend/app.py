@@ -10,8 +10,7 @@ import sys, os
 import pytz
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from data_store import load_conversations, save_single_conversation, load_dataset_names, create_dataset, delete_dataset, delete_conversation, duplicate_conversation, rename_dataset
-# Load environment variables
-import streamlit.components.v1 as components
+import time
 # Add this import at the top of your file
 from streamlit_javascript import st_javascript
 load_dotenv()
@@ -270,6 +269,10 @@ if st.button("Simulate All"):
             st.warning(f"{len(failed)} conversation(s) failed.")
         else:
             st.success("All conversations simulated successfully.")
+        
+        # 🔄 trigger table refresh so every Sim Count updates right away
+        st.session_state["sim_refresh_all"] = time.time()
+        st.rerun()
 
 # ---------- Header Row ----------
 st.divider()
@@ -383,7 +386,7 @@ for convo in displayed:
                         })
                         save_single_conversation(convo, st.session_state.dataset_name)
                         # 🔄 Trigger table refresh so Sim Count updates immediately
-                        st.session_state[f"sim_refresh_{convo['conversation_id']}"] = datetime.utcnow().timestamp()
+                        st.session_state[f"sim_refresh_{convo['conversation_id']}"] = time.time()
                         st.success("Simulation completed.")
                         st.session_state.open_analyze_id = None
                         st.rerun() 

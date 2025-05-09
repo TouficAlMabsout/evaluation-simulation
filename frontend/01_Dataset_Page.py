@@ -199,7 +199,6 @@ for ds in visible_datasets:
                     font-size: 0.95rem;
                     line-height: 1.4;
                     display: inline-block;
-                    background-color: #ffffff;
                     border: 1px solid #d0d0d0;
                     color: #000000;
                     font-weight: 500;
@@ -207,7 +206,6 @@ for ds in visible_datasets:
 
                 @media (prefers-color-scheme: dark) {{
                     .del-bubble {{
-                        background-color: #1e1e1e;
                         border: 1px solid #444444;
                         color: #ffffff;
                     }}

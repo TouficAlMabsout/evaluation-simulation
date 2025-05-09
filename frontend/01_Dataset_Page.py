@@ -61,6 +61,14 @@ for key, default in {
     if key not in st.session_state:
         st.session_state[key] = default
 
+
+# --- Play any one-shot toast saved from the previous run -------------
+if "pending_toast" in st.session_state:
+    msg, icon = st.session_state.pending_toast
+    st.toast(msg, icon=icon)
+    del st.session_state.pending_toast
+
+
 # --- Create Dataset Modal ---
 if st.session_state.creating_dataset:
     st.markdown("---")
@@ -138,7 +146,7 @@ for ds in visible_datasets:
                         st.warning("That name already exists.")
                     else:
                         rename_dataset(ds["name"], new_name.strip())
-                        st.toast(f"Renamed to “{new_name.strip()}”", icon="✏️")
+                        st.session_state.pending_toast = (f"Renamed to “{new_name.strip()}”", "✏️")
                         st.session_state.editing_dataset = None
                         if ds["name"] == st.session_state.selected_dataset_name:
                             st.session_state.selected_dataset_name = new_name.strip()

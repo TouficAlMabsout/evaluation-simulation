@@ -190,19 +190,26 @@ for ds in visible_datasets:
         # inline confirm (single-line message)
         if st.session_state.deleting_dataset == ds["name"]:
             st.markdown(
-                f"""
-                <div style="
-                    padding:6px 12px;
-                    background:#332c2c;
-                    border-radius:6px;
-                    display:inline-block;
-                    margin-bottom:6px;
-                ">
-                    Delete <strong>{ds['name']}</strong>?
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            f"""
+            <style>
+            .del-banner {{
+                padding: 6px 12px;
+                border-radius: 6px;
+                margin-bottom: 6px;
+                background: var(--color-bg-secondary);   /* switches with theme  */
+                color: var(--color-text);                /* correct foreground   */
+                font-size: 0.9rem;
+                display: inline-block;
+            }}
+            </style>
+
+            <div class="del-banner">
+                Delete <strong>{ds['name']}</strong>?
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
 
             cnf, canc = st.columns(2)
 

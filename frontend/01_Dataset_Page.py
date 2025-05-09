@@ -207,7 +207,7 @@ for ds in visible_datasets:
                 /* override for LIGHT theme (≈6 % black) */
                 @media (prefers-color-scheme: light) {{
                     .del-bubble {{
-                    background: rgba(0,0,0,.06);
+                    background: rgba(0,0,0,.30);
                     border: 1px solid rgba(0,0,0,.10);
                     }}
                 }}

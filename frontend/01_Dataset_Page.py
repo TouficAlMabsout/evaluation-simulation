@@ -193,22 +193,23 @@ for ds in visible_datasets:
                 f"""
                 <style>
                 .del-bubble {{
-                    padding: 8px 14px;
-                    border-radius: 8px;
-                    margin: 6px 0 10px 0;
-                    font-size: .92rem;
-                    line-height: 1.35;
+                    padding: 10px 16px;
+                    border-radius: 10px;
+                    margin: 8px 0 12px 0;
+                    font-size: 0.95rem;
+                    line-height: 1.4;
                     display: inline-block;
-                    background-color: #f0f0f0; /* light-gray for fallback */
-                    border: 1px solid #ccc;
-                    color: #111;
+                    background-color: #ffffff;
+                    border: 1px solid #d0d0d0;
+                    color: #000000;
+                    font-weight: 500;
                 }}
 
                 @media (prefers-color-scheme: dark) {{
                     .del-bubble {{
                         background-color: #1e1e1e;
-                        border: 1px solid #444;
-                        color: #f3f3f3;
+                        border: 1px solid #444444;
+                        color: #ffffff;
                     }}
                 }}
                 </style>

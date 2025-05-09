@@ -43,7 +43,7 @@ with hdr[1]:
 
 with hdr[2]:
     st.button(
-        "➕ Create Dataset",
+        "+ Create Dataset",
         on_click=lambda: st.session_state.update(
             {"creating_dataset": not st.session_state.creating_dataset}
         )
@@ -75,7 +75,7 @@ if st.session_state.creating_dataset:
     new_name = st.text_input("New Dataset Name")
     create_cols = st.columns([2, 1, 2])
     with create_cols[0]:
-        if st.button("✅ Create"):
+        if st.button("✔ Create"):
             try:
                 if new_name.strip() == "":
                     st.warning("Name cannot be empty.")

@@ -236,7 +236,7 @@ for ds in visible_datasets:
 # 🔁 Trigger auto-switch to Chat Page if a dataset was just selected
 if st.session_state.get("switch_to_chat"):
     st.session_state.switch_to_chat = False  # reset the flag
-    st.switch_page("02_Chat_Page.py")
+    st.switch_page("pages/02_Chat_Page.py")
 
 # --- Pagination ---
 st.divider()

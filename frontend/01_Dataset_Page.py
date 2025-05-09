@@ -43,7 +43,7 @@ with hdr[1]:
 
 with hdr[2]:
     st.button(
-        "+ Create Dataset",
+        "➕ Create Dataset",
         on_click=lambda: st.session_state.update(
             {"creating_dataset": not st.session_state.creating_dataset}
         )
@@ -154,7 +154,7 @@ for ds in visible_datasets:
                 except Exception as e:
                     st.error(f"Error renaming: {e}")
             st.button(
-                "❌ Cancel",
+                "✖ Cancel",
                 key=f"cancel_rename_{ds['name']}",
                 on_click=lambda: st.session_state.update({"editing_dataset": None})
             )

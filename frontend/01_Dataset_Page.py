@@ -20,12 +20,14 @@ def refresh_list():
     st.session_state.dataset_convo_counts.clear()
     st.rerun()
 
-def confirm_delete(name):
+def confirm_delete(name: str) -> None:
     delete_dataset(name)
-    st.success(f"Deleted **{name}**")
-    st.session_state.deleting_dataset = None
-    st.session_state.dataset_convo_counts.clear()
-    st.rerun()
+    st.session_state.update({          # mark UI state
+        "deleting_dataset": None,
+        "dataset_convo_counts": {},    # force fresh counts next run
+    })
+    # toast instead of banner (avoids pushing content to the top)
+    st.toast(f"Deleted '{name}' ✅", icon="🗑️")
 
 with hdr[0]:
     search_query = st.text_input(
@@ -35,6 +37,10 @@ with hdr[0]:
     )
 
 with hdr[1]:
+    def refresh_list() -> None:
+        st.session_state.dataset_convo_counts.clear()   # drop cache
+        # No st.rerun() here – Streamlit will rerun automatically.
+
     st.button("⟳", key="refresh_button", on_click=refresh_list)
 
 
@@ -179,10 +185,20 @@ for ds in visible_datasets:
         # inline confirm (single-line message)
         if st.session_state.deleting_dataset == ds["name"]:
             st.markdown(
-                f"<div style='padding:6px 10px; background:#332c2c; border-radius:6px;'>"
-                f"Delete <strong>{ds['name']}</strong>?</div>",
+                f"""
+                <div style="
+                    padding:6px 12px;
+                    background:#332c2c;
+                    border-radius:6px;
+                    display:inline-block;
+                    margin-bottom:6px;
+                ">
+                    Delete <strong>{ds['name']}</strong>?
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
+
             cnf, canc = st.columns(2)
 
             with cnf:

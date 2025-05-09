@@ -17,9 +17,9 @@ title_col, refresh_col = st.columns([10, 2])
 with title_col:
     st.title("📂 Datasets")
 with refresh_col:
-    st.button("⟳ Refresh List", key="refresh_button", on_click=lambda: (
+    st.button("⟳ Refresh", key="refresh_button", on_click=lambda: (
         st.session_state.dataset_convo_counts.clear(),
-        st.experimental_rerun()
+        st.rerun()
     ))
 
 # --- Session State Initialization ---
@@ -62,8 +62,10 @@ if st.session_state.creating_dataset:
             except Exception as e:
                 st.error(f"Error creating dataset: {e}")
     with create_cols[2]:
-        if st.button("❌ Cancel"):
-            st.session_state.creating_dataset = False
+        st.button(
+        "❌ Cancel",
+        on_click=lambda: st.session_state.update({"creating_dataset": False})
+        )
 
 # --- Load Dataset Names & Filter ---
 dataset_names = load_dataset_names()
@@ -142,28 +144,36 @@ for ds in visible_datasets:
         }),
         args=(ds["name"],))
 
+    # … your delete button …
     with row_cols[3]:
-        st.button("🗑️", key=f"delete_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"deleting_dataset": n}))
+        st.button(
+            "🗑️",
+            key=f"delete_{ds['name']}",
+            on_click=lambda name=ds["name"]: st.session_state.update({"deleting_dataset": name})
+        )
 
-# --- Delete Confirmation Modal ---
-if st.session_state.deleting_dataset:
-    st.markdown("---")
-    st.warning(f"Are you sure you want to delete **{st.session_state.deleting_dataset}**?")
-    confirm_cols = st.columns([1, 1])
-    with confirm_cols[0]:
-        if st.button("✅ Yes, Delete", key="confirm_delete"):
-            delete_dataset(st.session_state.deleting_dataset)
-            st.success(f"Dataset '{st.session_state.deleting_dataset}' deleted.")
-            if st.session_state.selected_dataset_name == st.session_state.deleting_dataset:
-                st.session_state.selected_dataset_name = None
-            st.session_state.deleting_dataset = None
-            st.session_state.dataset_convo_counts.clear()
-            st.rerun()
-    with confirm_cols[1]:
-        if st.button("❌ Cancel Delete", key="cancel_delete"):
-            st.session_state.deleting_dataset = None
-            st.rerun()
-
+        # ← Inline confirmation, only for the matching row
+        if st.session_state.deleting_dataset == ds["name"]:
+            st.warning(f"Are you sure you want to delete **{ds['name']}**?")
+            cnf, canc = st.columns(2)
+            with cnf:
+                st.button(
+                    "✅ Yes, Delete",
+                    key=f"confirm_delete_{ds['name']}",
+                    on_click=lambda name=ds["name"]: (
+                        delete_dataset(name),
+                        st.success(f"Deleted **{name}**"),
+                        st.session_state.update({"deleting_dataset": None}),
+                        st.session_state.dataset_convo_counts.clear(),
+                        st.rerun()
+                    )
+                )
+            with canc:
+                st.button(
+                    "❌ Cancel",
+                    key=f"cancel_delete_{ds['name']}",
+                    on_click=lambda: st.session_state.update({"deleting_dataset": None})
+                )
 
 # --- Pagination ---
 st.divider()

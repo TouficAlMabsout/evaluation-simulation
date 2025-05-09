@@ -199,7 +199,7 @@ for ds in visible_datasets:
                     font-size: .92rem;
                     line-height: 1.35;
                     display: inline-block;
-                    background: rgba(120, 120, 120, 0.08); /* neutral default */
+                    background: rgba(120, 120, 120, 0.08);  /* neutral fallback */
                     border: 1px solid rgba(120, 120, 120, 0.2);
                 }}
 
@@ -212,8 +212,8 @@ for ds in visible_datasets:
 
                 @media (prefers-color-scheme: light) {{
                     .del-bubble {{
-                        background: rgba(0, 0, 0, 0.06);
-                        border: 1px solid rgba(0, 0, 0, 0.1);
+                        background: rgba(0, 0, 0, 0.08);  /* darker opacity for better visibility */
+                        border: 1px solid rgba(0, 0, 0, 0.15);
                     }}
                 }}
                 </style>

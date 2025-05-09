@@ -40,9 +40,18 @@ try:
 except pytz.UnknownTimeZoneError:
     user_tz = pytz.timezone("Asia/Dubai")
 
-# ✅ Ensure dataset_name is synced from selection page
-if "selected_dataset_name" in st.session_state:
-    st.session_state.dataset_name = st.session_state.selected_dataset_name
+# ✅ Force sync of selected dataset (and reset old conversations + filters if dataset changed)
+selected = st.session_state.get("selected_dataset_name")
+prev = st.session_state.get("dataset_name")
+
+if selected and selected != prev:
+    st.session_state.dataset_name = selected
+    st.session_state.conversations = load_conversations(selected)
+    st.session_state.current_page = 1
+    st.session_state.start_date = None
+    st.session_state.end_date = None
+    st.session_state.user_filter = ""
+    st.session_state.chat_id_filter = ""
 
 # ⚠️ Fallback if no dataset selected
 if "dataset_name" not in st.session_state or not st.session_state.dataset_name:

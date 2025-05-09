@@ -158,11 +158,6 @@ if selected_workspace and selected_workspace != st.session_state.get("prev_works
 
 if st.button("⟳ Refresh Conversations"):
     st.session_state.conversations = load_conversations(st.session_state.dataset_name)
-    st.session_state.update({
-        "workspace": "",
-        "prompt_list": [],
-        "prompt_vars_cache": {}
-    })
     st.success(f"Refreshed dataset: {st.session_state.dataset_name}")
 
 

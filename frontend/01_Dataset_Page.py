@@ -192,25 +192,37 @@ for ds in visible_datasets:
             st.markdown(
                 f"""
                 <style>
-                .del-box {{
+                .del-bubble {{
                     padding: 8px 14px;
-                    border-radius: 10px;
-                    border: 1px solid var(--color-border);
-                    background: var(--color-bg-secondary);
-                    color: var(--color-text);
-                    box-shadow: 0 1px 4px rgba(0,0,0,.12);
-                    display: inline-block;
+                    border-radius: 8px;
+                    margin: 6px 0 10px 0;
                     font-size: 0.92rem;
-                    margin-bottom: 6px;
+                    line-height: 1.3;
+                    display: inline-block;
+
+                    /* uses Streamlit’s CSS vars, falls back to hard-coded neutrals */
+                    background: var(--secondary-background-color, #f1f1f1);
+                    color:       var(--text-color, #000);
+                    border: 1px solid rgba(0,0,0,0.15);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                }}
+
+                /* automatic tweak for dark theme */
+                @media (prefers-color-scheme: dark) {{
+                    .del-bubble {{
+                    background: var(--secondary-background-color, #2e2e2e);
+                    border: 1px solid rgba(255,255,255,0.12);
+                    }}
                 }}
                 </style>
 
-                <div class="del-box">
-                    Delete <strong>{ds['name']}</strong>?
+                <div class="del-bubble">
+                    Delete&nbsp;<strong>{ds['name']}</strong>?
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+
 
 
             cnf, canc = st.columns(2)

@@ -16,9 +16,6 @@ st.title("📂 Datasets")
 
 # --- Search  |  Refresh  |  Create  ----------------------------
 hdr = st.columns([4, 1, 2])        # widths: search | refresh | create
-def refresh_list():
-    st.session_state.dataset_convo_counts.clear()
-    st.rerun()
 
 def confirm_delete(name: str) -> None:
     delete_dataset(name)
@@ -78,7 +75,7 @@ if st.session_state.creating_dataset:
                     st.warning("A dataset with this name already exists.")
                 else:
                     create_dataset(new_name.strip())
-                    st.success(f"Dataset '{new_name.strip()}' created.")
+                    st.toast(f"Created dataset “{new_name.strip()}”", icon="📁")
                     st.session_state.creating_dataset = False
                     st.session_state.dataset_convo_counts.clear()
                     st.rerun()
@@ -141,10 +138,10 @@ for ds in visible_datasets:
                         st.warning("That name already exists.")
                     else:
                         rename_dataset(ds["name"], new_name.strip())
+                        st.toast(f"Renamed to “{new_name.strip()}”", icon="✏️")
                         st.session_state.editing_dataset = None
                         if ds["name"] == st.session_state.selected_dataset_name:
                             st.session_state.selected_dataset_name = new_name.strip()
-                        st.success("Renamed successfully.")
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error renaming: {e}")

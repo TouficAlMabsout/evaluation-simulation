@@ -27,7 +27,7 @@ def confirm_delete(name: str) -> None:
         "dataset_convo_counts": {},    # force fresh counts next run
     })
     # toast instead of banner (avoids pushing content to the top)
-    st.toast(f"Deleted '{name}' ✅", icon="🗑️")
+    st.toast(f"Deleted '{name}' dataset", icon="🗑️")
 
 with hdr[0]:
     search_query = st.text_input(

@@ -14,7 +14,7 @@ import math
 st.set_page_config(page_title="Dataset Selection", page_icon="📂")
 st.title("📂 Datasets")
 
-# --- Session State ---
+# --- Session State Initialization ---
 for key, default in {
     "selected_dataset_name": None,
     "dataset_page": 1,
@@ -26,7 +26,7 @@ for key, default in {
     if key not in st.session_state:
         st.session_state[key] = default
 
-# --- Refresh datasets manually ---
+# --- Refresh Datasets Manually ---
 with st.columns([4, 2])[1]:
     if st.button("⟳ Refresh List"):
         st.session_state.dataset_convo_counts.clear()
@@ -37,52 +37,51 @@ cols = st.columns([4, 2])
 with cols[0]:
     search_query = st.text_input("Search Datasets", placeholder="Type to search...", label_visibility="collapsed")
 with cols[1]:
-    if st.button("➕ Create Dataset"):
-        st.session_state.creating_dataset = not st.session_state.creating_dataset
+    st.button("➕ Create Dataset", on_click=lambda: st.session_state.update({"creating_dataset": not st.session_state.creating_dataset}))
 
 # --- Create Dataset Modal ---
 if st.session_state.creating_dataset:
-    with st.container():
-        st.markdown("---")
-        new_name = st.text_input("New Dataset Name")
-        create_cols = st.columns([2, 1, 2])
-        with create_cols[0]:
-            if st.button("✅ Create"):
-                try:
-                    if new_name.strip() == "":
-                        st.warning("Name cannot be empty.")
-                    elif new_name.strip() in load_dataset_names():
-                        st.warning("A dataset with this name already exists.")
-                    else:
-                        create_dataset(new_name.strip())
-                        st.success(f"Dataset '{new_name.strip()}' created.")
-                        st.session_state.creating_dataset = False
-                        st.session_state.dataset_convo_counts.clear()
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Error creating dataset: {e}")
-        with create_cols[2]:
-            if st.button("❌ Cancel"):
-                st.session_state.creating_dataset = False
+    st.markdown("---")
+    new_name = st.text_input("New Dataset Name")
+    create_cols = st.columns([2, 1, 2])
+    with create_cols[0]:
+        if st.button("✅ Create"):
+            try:
+                if new_name.strip() == "":
+                    st.warning("Name cannot be empty.")
+                elif new_name.strip() in load_dataset_names():
+                    st.warning("A dataset with this name already exists.")
+                else:
+                    create_dataset(new_name.strip())
+                    st.success(f"Dataset '{new_name.strip()}' created.")
+                    st.session_state.creating_dataset = False
+                    st.session_state.dataset_convo_counts.clear()
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Error creating dataset: {e}")
+    with create_cols[2]:
+        if st.button("❌ Cancel"):
+            st.session_state.creating_dataset = False
 
-# --- Load & Filter Dataset Names Only ---
+# --- Load Dataset Names & Filter ---
 dataset_names = load_dataset_names()
 if search_query:
     dataset_names = [d for d in dataset_names if search_query.lower() in d.lower()]
 
-# --- Count conversations ONLY if missing ---
-for name in dataset_names:
-    if name not in st.session_state.dataset_convo_counts:
-        try:
-            st.session_state.dataset_convo_counts[name] = len(load_conversations(name))
-        except Exception:
-            st.session_state.dataset_convo_counts[name] = 0
+# --- Count conversations only when idle ---
+if not st.session_state.creating_dataset and not st.session_state.editing_dataset and not st.session_state.deleting_dataset:
+    for name in dataset_names:
+        if name not in st.session_state.dataset_convo_counts:
+            try:
+                st.session_state.dataset_convo_counts[name] = len(load_conversations(name))
+            except Exception:
+                st.session_state.dataset_convo_counts[name] = 0
 
-# --- Prepare objects ---
-dataset_objs = [{"name": name, "num_conversations": st.session_state.dataset_convo_counts[name]} for name in dataset_names]
+# --- Prepare Display Objects ---
+dataset_objs = [{"name": name, "num_conversations": st.session_state.dataset_convo_counts.get(name, 0)} for name in dataset_names]
 dataset_objs.sort(key=lambda d: d["name"].lower())
 
-# --- Pagination ---
+# --- Pagination Logic ---
 datasets_per_page = 3
 total_pages = max(1, math.ceil(len(dataset_objs) / datasets_per_page))
 current_page = st.session_state.dataset_page
@@ -102,10 +101,7 @@ header_cols[3].markdown("**Delete**")
 for ds in visible_datasets:
     is_selected = ds["name"] == st.session_state.selected_dataset_name
     row_cols = st.columns([6, 2, 1, 1])
-    row_style = (
-        "background-color: rgba(0, 123, 255, 0.15); border-radius: 5px; padding: 4px;"
-        if is_selected else ""
-    )
+    row_style = "background-color: rgba(0, 123, 255, 0.15); border-radius: 5px; padding: 4px;" if is_selected else ""
 
     with row_cols[0]:
         if st.session_state.editing_dataset == ds["name"]:
@@ -128,9 +124,7 @@ for ds in visible_datasets:
             if st.button("❌ Cancel", key=f"cancel_rename_{ds['name']}"):
                 st.session_state.editing_dataset = None
         else:
-            if st.button(ds["name"], key=f"select_{ds['name']}"):
-                st.session_state.selected_dataset_name = ds["name"]
-                st.switch_page("pages/02_Chat_Page.py")
+            st.button(ds["name"], key=f"select_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"selected_dataset_name": n}), args=(), kwargs={})
             if row_style:
                 st.markdown(f"<div style='{row_style}'></div>", unsafe_allow_html=True)
 
@@ -138,14 +132,12 @@ for ds in visible_datasets:
         st.markdown(f"{ds['num_conversations']}")
 
     with row_cols[2]:
-        if st.button("✏️", key=f"edit_{ds['name']}"):
-            st.session_state.editing_dataset = ds["name"]
+        st.button("✏️", key=f"edit_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"editing_dataset": n}))
 
     with row_cols[3]:
-        if st.button("🗑️", key=f"delete_{ds['name']}"):
-            st.session_state.deleting_dataset = ds["name"]
+        st.button("🗑️", key=f"delete_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"deleting_dataset": n}))
 
-# --- Delete Confirmation ---
+# --- Delete Confirmation Modal ---
 if st.session_state.deleting_dataset:
     st.markdown("---")
     st.warning(f"Are you sure you want to delete **{st.session_state.deleting_dataset}**?")

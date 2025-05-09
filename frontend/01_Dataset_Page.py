@@ -10,17 +10,41 @@ from data_store import (
 )
 import math
 
-# --- Config ---
-# --- Config + Title Row ---
+# --- Config  ---------------------------------------------------
 st.set_page_config(page_title="Dataset Selection", page_icon="📂")
-title_col, refresh_col = st.columns([10, 2])
-with title_col:
-    st.title("📂 Datasets")
-with refresh_col:
-    st.button("⟳ Refresh", key="refresh_button", on_click=lambda: (
-        st.session_state.dataset_convo_counts.clear(),
-        st.rerun()
-    ))
+st.title("📂 Datasets")
+
+# --- Search  |  Refresh  |  Create  ----------------------------
+hdr = st.columns([4, 1, 2])        # widths: search | refresh | create
+def refresh_list():
+    st.session_state.dataset_convo_counts.clear()
+    st.rerun()
+
+def confirm_delete(name):
+    delete_dataset(name)
+    st.success(f"Deleted **{name}**")
+    st.session_state.deleting_dataset = None
+    st.session_state.dataset_convo_counts.clear()
+    st.rerun()
+
+with hdr[0]:
+    search_query = st.text_input(
+        "Search Datasets",
+        placeholder="Type to search…",
+        label_visibility="collapsed"
+    )
+
+with hdr[1]:
+    st.button("⟳ Refresh", key="refresh_button", on_click=refresh_list)
+
+
+with hdr[2]:
+    st.button(
+        "➕ Create Dataset",
+        on_click=lambda: st.session_state.update(
+            {"creating_dataset": not st.session_state.creating_dataset}
+        )
+    )
 
 # --- Session State Initialization ---
 for key, default in {
@@ -33,13 +57,6 @@ for key, default in {
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
-
-# --- Header: Search + Create ---
-cols = st.columns([4, 2])
-with cols[0]:
-    search_query = st.text_input("Search Datasets", placeholder="Type to search...", label_visibility="collapsed")
-with cols[1]:
-    st.button("➕ Create Dataset", on_click=lambda: st.session_state.update({"creating_dataset": not st.session_state.creating_dataset}))
 
 # --- Create Dataset Modal ---
 if st.session_state.creating_dataset:
@@ -125,8 +142,12 @@ for ds in visible_datasets:
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error renaming: {e}")
-            if st.button("❌ Cancel", key=f"cancel_rename_{ds['name']}"):
-                st.session_state.editing_dataset = None
+            st.button(
+                "❌ Cancel",
+                key=f"cancel_rename_{ds['name']}",
+                on_click=lambda: st.session_state.update({"editing_dataset": None})
+            )
+
         else:
             st.button(ds["name"], key=f"select_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"selected_dataset_name": n}), args=(), kwargs={})
             if row_style:
@@ -146,28 +167,33 @@ for ds in visible_datasets:
 
     # … your delete button …
     with row_cols[3]:
+        # toggle open/close
         st.button(
             "🗑️",
             key=f"delete_{ds['name']}",
-            on_click=lambda name=ds["name"]: st.session_state.update({"deleting_dataset": name})
+            on_click=lambda name=ds["name"]: st.session_state.update(
+                {"deleting_dataset": None if st.session_state.deleting_dataset == name else name}
+            )
         )
 
-        # ← Inline confirmation, only for the matching row
+        # inline confirm (single-line message)
         if st.session_state.deleting_dataset == ds["name"]:
-            st.warning(f"Are you sure you want to delete **{ds['name']}**?")
+            st.markdown(
+                f"<div style='padding:6px 10px; background:#332c2c; border-radius:6px;'>"
+                f"Delete <strong>{ds['name']}</strong>?</div>",
+                unsafe_allow_html=True,
+            )
             cnf, canc = st.columns(2)
+
             with cnf:
                 st.button(
                     "✅ Yes, Delete",
                     key=f"confirm_delete_{ds['name']}",
-                    on_click=lambda name=ds["name"]: (
-                        delete_dataset(name),
-                        st.success(f"Deleted **{name}**"),
-                        st.session_state.update({"deleting_dataset": None}),
-                        st.session_state.dataset_convo_counts.clear(),
-                        st.rerun()
-                    )
+                    on_click=confirm_delete,
+                    args=(ds["name"],)
                 )
+
+
             with canc:
                 st.button(
                     "❌ Cancel",

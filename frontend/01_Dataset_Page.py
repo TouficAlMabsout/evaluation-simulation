@@ -91,7 +91,7 @@ if st.session_state.creating_dataset:
                 st.error(f"Error creating dataset: {e}")
     with create_cols[2]:
         st.button(
-        "❌ Cancel",
+        "✖ Cancel",
         on_click=lambda: st.session_state.update({"creating_dataset": False})
         )
 
@@ -114,7 +114,7 @@ dataset_objs = [{"name": name, "num_conversations": st.session_state.dataset_con
 dataset_objs.sort(key=lambda d: d["name"].lower())
 
 # --- Pagination Logic ---
-datasets_per_page = 3
+datasets_per_page = 10
 total_pages = max(1, math.ceil(len(dataset_objs) / datasets_per_page))
 current_page = st.session_state.dataset_page
 start = (current_page - 1) * datasets_per_page
@@ -138,7 +138,7 @@ for ds in visible_datasets:
     with row_cols[0]:
         if st.session_state.editing_dataset == ds["name"]:
             new_name = st.text_input("Rename to:", value=ds["name"], key=f"rename_input_{ds['name']}")
-            if st.button("💾 Save", key=f"save_rename_{ds['name']}"):
+            if st.button("🖫 Save", key=f"save_rename_{ds['name']}"):
                 try:
                     if new_name.strip() == "":
                         st.warning("New name cannot be empty.")
@@ -219,7 +219,7 @@ for ds in visible_datasets:
 
             with cnf:
                 st.button(
-                    "✅",
+                    "✔",
                     key=f"confirm_delete_{ds['name']}",
                     on_click=confirm_delete,
                     args=(ds["name"],)
@@ -228,7 +228,7 @@ for ds in visible_datasets:
 
             with canc:
                 st.button(
-                    "❌",
+                    "✖",
                     key=f"cancel_delete_{ds['name']}",
                     on_click=lambda: st.session_state.update({"deleting_dataset": None})
                 )

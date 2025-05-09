@@ -379,7 +379,7 @@ for convo in displayed:
                     unsafe_allow_html=True,
                 )
 
-        if st.button("🗑 Delete this Chat", key=f"delete_{convo['conversation_id']}"):
+        if st.button("🗑️ Delete this Chat", key=f"delete_{convo['conversation_id']}"):
             delete_conversation(st.session_state.dataset_name, convo["conversation_id"])
             st.success(f"Chat {convo['conversation_id']} deleted.")
             st.session_state.conversations = load_conversations(st.session_state.dataset_name)

@@ -65,6 +65,9 @@ dataset_objs = [{"name": name, "num_conversations": len(load_conversations(name)
 if search_query:
     dataset_objs = [d for d in dataset_objs if search_query.lower() in d["name"].lower()]
 
+# 🔽 Sort once to stabilize pagination
+dataset_objs.sort(key=lambda d: d["name"].lower())
+
 # --- Pagination ---
 datasets_per_page = 3
 total_pages = max(1, math.ceil(len(dataset_objs) / datasets_per_page))
@@ -145,9 +148,22 @@ if st.session_state.deleting_dataset:
         if st.button("❌ Cancel Delete"):
             st.session_state.deleting_dataset = None
 
-# --- Pagination Controls ---
-if total_pages > 1:
-    pag_cols = st.columns(total_pages)
-    for i in range(total_pages):
-        if pag_cols[i].button(str(i + 1), key=f"pg_{i+1}"):
-            st.session_state.dataset_page = i + 1
+# --- Clean Pagination Controls (Chat-style) ---
+st.divider()
+pagination_cols = st.columns([2, 14, 2])
+with pagination_cols[0]:
+    if st.button("◀ Prev") and st.session_state.dataset_page > 1:
+        st.session_state.dataset_page -= 1
+        st.rerun()
+
+with pagination_cols[2]:
+    if st.button("Next ▶") and st.session_state.dataset_page < total_pages:
+        st.session_state.dataset_page += 1
+        st.rerun()
+
+with pagination_cols[1]:
+    st.markdown(
+        f"<div style='text-align:center;'>Page {st.session_state.dataset_page} of {total_pages}</div>",
+        unsafe_allow_html=True
+    )
+

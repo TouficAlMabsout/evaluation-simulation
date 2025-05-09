@@ -203,13 +203,6 @@ for ds in visible_datasets:
                     color: rgba(0, 0, 0, 0.8);
                     font-weight: 500;
                 }}
-
-                @media (prefers-color-scheme: dark) {{
-                    .del-bubble {{
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        color: rgba(255, 255, 255, 0.85);
-                    }}
-                }}
                 </style>
 
                 <div class="del-bubble">

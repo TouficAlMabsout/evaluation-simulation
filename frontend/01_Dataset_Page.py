@@ -35,7 +35,7 @@ with hdr[0]:
     )
 
 with hdr[1]:
-    st.button("⟳ Refresh", key="refresh_button", on_click=refresh_list)
+    st.button("⟳", key="refresh_button", on_click=refresh_list)
 
 
 with hdr[2]:
@@ -109,10 +109,10 @@ current_page = st.session_state.dataset_page
 start = (current_page - 1) * datasets_per_page
 end = start + datasets_per_page
 visible_datasets = dataset_objs[start:end]
-
+table_cols = [4, 2, 2, 2]
 # --- Table Header ---
 st.markdown("### ")
-header_cols = st.columns([6, 2, 1, 1])
+header_cols = st.columns(table_cols)
 header_cols[0].markdown("**Name**")
 header_cols[1].markdown("**Convos**")
 header_cols[2].markdown("**Edit**")
@@ -121,7 +121,7 @@ header_cols[3].markdown("**Delete**")
 # --- Dataset Rows ---
 for ds in visible_datasets:
     is_selected = ds["name"] == st.session_state.selected_dataset_name
-    row_cols = st.columns([6, 2, 1, 1])
+    row_cols = st.columns(table_cols)
     row_style = "background-color: rgba(0, 123, 255, 0.15); border-radius: 5px; padding: 4px;" if is_selected else ""
 
     with row_cols[0]:

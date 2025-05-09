@@ -187,7 +187,7 @@ for ds in visible_datasets:
 
             with cnf:
                 st.button(
-                    "✅ Yes, Delete",
+                    "✅",
                     key=f"confirm_delete_{ds['name']}",
                     on_click=confirm_delete,
                     args=(ds["name"],)
@@ -196,7 +196,7 @@ for ds in visible_datasets:
 
             with canc:
                 st.button(
-                    "❌ Cancel",
+                    "❌",
                     key=f"cancel_delete_{ds['name']}",
                     on_click=lambda: st.session_state.update({"deleting_dataset": None})
                 )

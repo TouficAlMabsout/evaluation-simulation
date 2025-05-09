@@ -192,7 +192,6 @@ for ds in visible_datasets:
             st.markdown(
                 f"""
                 <style>
-                /* default = dark-theme overlay (≈8 % white) */
                 .del-bubble {{
                     padding: 8px 14px;
                     border-radius: 8px;
@@ -200,15 +199,21 @@ for ds in visible_datasets:
                     font-size: .92rem;
                     line-height: 1.35;
                     display: inline-block;
-                    background: rgba(255,255,255,.50);
-                    border: 1px solid rgba(255,255,255,.15);
+                    background: rgba(120, 120, 120, 0.08); /* neutral default */
+                    border: 1px solid rgba(120, 120, 120, 0.2);
                 }}
 
-                /* override for LIGHT theme (≈6 % black) */
+                @media (prefers-color-scheme: dark) {{
+                    .del-bubble {{
+                        background: rgba(255, 255, 255, 0.08);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                    }}
+                }}
+
                 @media (prefers-color-scheme: light) {{
                     .del-bubble {{
-                    background: rgba(0,0,0,.30);
-                    border: 1px solid rgba(0,0,0,.10);
+                        background: rgba(0, 0, 0, 0.06);
+                        border: 1px solid rgba(0, 0, 0, 0.1);
                     }}
                 }}
                 </style>
@@ -219,9 +224,6 @@ for ds in visible_datasets:
                 """,
                 unsafe_allow_html=True,
             )
-
-
-
 
             cnf, canc = st.columns(2)
 

@@ -197,21 +197,19 @@ for ds in visible_datasets:
                     border-radius: 8px;
                     margin: 6px 0 10px 0;
                     font-size: 0.92rem;
-                    line-height: 1.3;
+                    line-height: 1.35;
                     display: inline-block;
 
-                    /* uses Streamlit’s CSS vars, falls back to hard-coded neutrals */
-                    background: var(--secondary-background-color, #f1f1f1);
-                    color:       var(--text-color, #000);
-                    border: 1px solid rgba(0,0,0,0.15);
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    /* default for dark mode ─ very light wash */
+                    background: rgba(255,255,255,0.10);   /* 10 % white */
+                    border: 1px solid rgba(255,255,255,0.12);
                 }}
 
-                /* automatic tweak for dark theme */
-                @media (prefers-color-scheme: dark) {{
+                /* override for light mode – light grey wash */
+                @media (prefers-color-scheme: light) {{
                     .del-bubble {{
-                    background: var(--secondary-background-color, #2e2e2e);
-                    border: 1px solid rgba(255,255,255,0.12);
+                    background: rgba(0,0,0,0.04);      /* 4 % black  */
+                    border: 1px solid rgba(0,0,0,0.08);
                     }}
                 }}
                 </style>
@@ -222,6 +220,7 @@ for ds in visible_datasets:
                 """,
                 unsafe_allow_html=True,
             )
+
 
 
 

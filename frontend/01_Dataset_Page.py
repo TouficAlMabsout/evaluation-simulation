@@ -200,20 +200,14 @@ for ds in visible_datasets:
                     line-height: 1.4;
                     display: inline-block;
                     border: 1px solid #d0d0d0;
+                    color: #000 !important;
                     font-weight: 500;
-                }}
-
-                @media (prefers-color-scheme: light) {{
-                    .del-bubble {{
-                        color: #000000;
-                        border: 1px solid #d0d0d0;
-                    }}
                 }}
 
                 @media (prefers-color-scheme: dark) {{
                     .del-bubble {{
-                        color: #ffffff;
-                        border: 1px solid #444444;
+                        color: #fff !important;
+                        border: 1px solid #444 !important;
                     }}
                 }}
                 </style>

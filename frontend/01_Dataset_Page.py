@@ -199,21 +199,16 @@ for ds in visible_datasets:
                     font-size: .92rem;
                     line-height: 1.35;
                     display: inline-block;
-                    background: rgba(120, 120, 120, 0.08);  /* neutral fallback */
-                    border: 1px solid rgba(120, 120, 120, 0.2);
+                    background-color: #f0f0f0; /* light-gray for fallback */
+                    border: 1px solid #ccc;
+                    color: #111;
                 }}
 
                 @media (prefers-color-scheme: dark) {{
                     .del-bubble {{
-                        background: rgba(255, 255, 255, 0.08);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                    }}
-                }}
-
-                @media (prefers-color-scheme: light) {{
-                    .del-bubble {{
-                        background: rgba(0, 0, 0, 0.08);  /* darker opacity for better visibility */
-                        border: 1px solid rgba(0, 0, 0, 0.15);
+                        background-color: #1e1e1e;
+                        border: 1px solid #444;
+                        color: #f3f3f3;
                     }}
                 }}
                 </style>

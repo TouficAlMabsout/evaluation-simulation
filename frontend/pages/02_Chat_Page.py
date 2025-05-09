@@ -140,17 +140,19 @@ if st.button("← Back to Datasets"):
     st.session_state.chat_id_filter = ""
     st.switch_page("01_Dataset_Page.py")
 
+if "prev_workspace" not in st.session_state:
+    st.session_state.prev_workspace = None
 
 # Workspace selection
 workspace_options = ["MaidsAT-Delighters-Doctors", "Resolvers", "Sales"]
 if "workspace" not in st.session_state:
     st.session_state.workspace = workspace_options[0]
 
-st.session_state.workspace = st.selectbox("Select Workspace", workspace_options)
-
-# ✅ Prompt list fetch
-if not st.session_state.prompt_list:
-    st.session_state.prompt_list = fetch_prompt_list()
+new_workspace = st.selectbox("Select Workspace", workspace_options, index=workspace_options.index(st.session_state.workspace))
+if new_workspace != st.session_state.workspace:
+    st.session_state.workspace = new_workspace
+    st.session_state.prev_workspace = new_workspace
+    st.session_state.prompt_list = fetch_prompt_list()  # 🔁 refresh on change
 
 if st.button("⟳ Refresh Conversations"):
     st.session_state.conversations = load_conversations(st.session_state.dataset_name)

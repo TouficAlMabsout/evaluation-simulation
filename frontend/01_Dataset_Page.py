@@ -66,7 +66,7 @@ if search_query:
     dataset_objs = [d for d in dataset_objs if search_query.lower() in d["name"].lower()]
 
 # --- Pagination ---
-datasets_per_page = 10
+datasets_per_page = 3
 total_pages = max(1, math.ceil(len(dataset_objs) / datasets_per_page))
 current_page = st.session_state.dataset_page
 start = (current_page - 1) * datasets_per_page

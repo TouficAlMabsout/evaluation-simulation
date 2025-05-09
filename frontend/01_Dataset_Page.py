@@ -11,8 +11,16 @@ from data_store import (
 import math
 
 # --- Config ---
+# --- Config + Title Row ---
 st.set_page_config(page_title="Dataset Selection", page_icon="📂")
-st.title("📂 Datasets")
+title_col, refresh_col = st.columns([10, 2])
+with title_col:
+    st.title("📂 Datasets")
+with refresh_col:
+    st.button("⟳ Refresh List", key="refresh_button", on_click=lambda: (
+        st.session_state.dataset_convo_counts.clear(),
+        st.experimental_rerun()
+    ))
 
 # --- Session State Initialization ---
 for key, default in {
@@ -25,12 +33,6 @@ for key, default in {
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
-
-# --- Refresh Datasets Manually ---
-with st.columns([4, 2])[1]:
-    if st.button("⟳ Refresh List"):
-        st.session_state.dataset_convo_counts.clear()
-        st.rerun()
 
 # --- Header: Search + Create ---
 cols = st.columns([4, 2])
@@ -132,7 +134,13 @@ for ds in visible_datasets:
         st.markdown(f"{ds['num_conversations']}")
 
     with row_cols[2]:
-        st.button("✏️", key=f"edit_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"editing_dataset": n}))
+       st.button(
+        "✏️",
+        key=f"edit_{ds['name']}",
+        on_click=lambda n=ds["name"]: st.session_state.update({
+            "editing_dataset": None if st.session_state.editing_dataset == n else n
+        }),
+        args=(ds["name"],))
 
     with row_cols[3]:
         st.button("🗑️", key=f"delete_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"deleting_dataset": n}))
@@ -143,20 +151,19 @@ if st.session_state.deleting_dataset:
     st.warning(f"Are you sure you want to delete **{st.session_state.deleting_dataset}**?")
     confirm_cols = st.columns([1, 1])
     with confirm_cols[0]:
-        if st.button("✅ Yes, Delete"):
-            try:
-                delete_dataset(st.session_state.deleting_dataset)
-                st.success("Dataset deleted.")
-                if st.session_state.selected_dataset_name == st.session_state.deleting_dataset:
-                    st.session_state.selected_dataset_name = None
-                st.session_state.deleting_dataset = None
-                st.session_state.dataset_convo_counts.clear()
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error deleting: {e}")
-    with confirm_cols[1]:
-        if st.button("❌ Cancel Delete"):
+        if st.button("✅ Yes, Delete", key="confirm_delete"):
+            delete_dataset(st.session_state.deleting_dataset)
+            st.success(f"Dataset '{st.session_state.deleting_dataset}' deleted.")
+            if st.session_state.selected_dataset_name == st.session_state.deleting_dataset:
+                st.session_state.selected_dataset_name = None
             st.session_state.deleting_dataset = None
+            st.session_state.dataset_convo_counts.clear()
+            st.rerun()
+    with confirm_cols[1]:
+        if st.button("❌ Cancel Delete", key="cancel_delete"):
+            st.session_state.deleting_dataset = None
+            st.rerun()
+
 
 # --- Pagination ---
 st.divider()

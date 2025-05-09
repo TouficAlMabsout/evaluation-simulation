@@ -199,15 +199,15 @@ for ds in visible_datasets:
                     font-size: 0.95rem;
                     line-height: 1.4;
                     display: inline-block;
-                    border: 1px solid #d0d0d0;
-                    color: #000 !important;
+                    border: 1px solid rgba(0, 0, 0, 0.2);
+                    color: rgba(0, 0, 0, 0.8);
                     font-weight: 500;
                 }}
 
                 @media (prefers-color-scheme: dark) {{
                     .del-bubble {{
-                        color: #fff !important;
-                        border: 1px solid #444 !important;
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: rgba(255, 255, 255, 0.85);
                     }}
                 }}
                 </style>

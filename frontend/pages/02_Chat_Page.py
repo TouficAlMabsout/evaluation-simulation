@@ -212,7 +212,9 @@ for var in prompt_vars:
     dataset_variable_values[var] = val if val.strip() else ""
 
 if st.button("Simulate All"):
-    if not selected_prompt:
+    if not st.session_state.workspace:
+        st.warning("Please select a workspace before running simulation.")
+    elif not selected_prompt:
         st.warning("Please select a prompt before running simulation.")
     else:
         failed = []
@@ -350,7 +352,9 @@ for convo in displayed:
             variable_values[var] = val if val.strip() else ""
 
         if st.button("Run", key=f"run_{convo['conversation_id']}"):
-            if not selected_prompt:
+            if not st.session_state.workspace:
+                st.warning("Please select a workspace before running simulation.")
+            elif not selected_prompt:
                 st.warning("Please select a prompt before running simulation.")
             else:
                 try:

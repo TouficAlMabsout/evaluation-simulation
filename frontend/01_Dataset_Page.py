@@ -198,9 +198,9 @@ for ds in visible_datasets:
                     font-size: 0.95rem;
                     line-height: 1.4;
                     display: inline-block;
-                    background: rgba(0, 0, 0, 0.05);
-                    border: 1px solid rgba(0, 0, 0, 0.2);
-                    color: rgba(0, 0, 0, 0.8);
+                    background: rgba(128, 128, 128, 0.08);  /* neutral gray with opacity */
+                    border: 1px solid rgba(128, 128, 128, 0.3);  /* subtle gray border */
+                    color: inherit;  /* uses theme's text color */
                     font-weight: 500;
                 ">
                     Delete&nbsp;<strong>{ds['name']}</strong>?

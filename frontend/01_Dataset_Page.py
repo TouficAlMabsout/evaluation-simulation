@@ -6,7 +6,7 @@ from data_store import (
     create_dataset,
     delete_dataset,
     rename_dataset,
-    load_conversations
+    load_conversations,
 )
 import math
 
@@ -15,16 +15,22 @@ st.set_page_config(page_title="Dataset Selection", page_icon="📂")
 st.title("📂 Datasets")
 
 # --- Session State ---
-if "selected_dataset_name" not in st.session_state:
-    st.session_state.selected_dataset_name = None
-if "dataset_page" not in st.session_state:
-    st.session_state.dataset_page = 1
-if "editing_dataset" not in st.session_state:
-    st.session_state.editing_dataset = None
-if "deleting_dataset" not in st.session_state:
-    st.session_state.deleting_dataset = None
-if "creating_dataset" not in st.session_state:
-    st.session_state.creating_dataset = False
+for key, default in {
+    "selected_dataset_name": None,
+    "dataset_page": 1,
+    "editing_dataset": None,
+    "deleting_dataset": None,
+    "creating_dataset": False,
+    "dataset_convo_counts": {},
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
+
+# --- Refresh datasets manually ---
+with st.columns([4, 2])[1]:
+    if st.button("⟳ Refresh List"):
+        st.session_state.dataset_convo_counts.clear()
+        st.rerun()
 
 # --- Header: Search + Create ---
 cols = st.columns([4, 2])
@@ -51,6 +57,7 @@ if st.session_state.creating_dataset:
                         create_dataset(new_name.strip())
                         st.success(f"Dataset '{new_name.strip()}' created.")
                         st.session_state.creating_dataset = False
+                        st.session_state.dataset_convo_counts.clear()
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error creating dataset: {e}")
@@ -58,15 +65,21 @@ if st.session_state.creating_dataset:
             if st.button("❌ Cancel"):
                 st.session_state.creating_dataset = False
 
-
-# --- Load & Filter ---
+# --- Load & Filter Dataset Names Only ---
 dataset_names = load_dataset_names()
-dataset_objs = [{"name": name, "num_conversations": len(load_conversations(name))} for name in dataset_names]
-
 if search_query:
-    dataset_objs = [d for d in dataset_objs if search_query.lower() in d["name"].lower()]
+    dataset_names = [d for d in dataset_names if search_query.lower() in d.lower()]
 
-# 🔽 Sort once to stabilize pagination
+# --- Count conversations ONLY if missing ---
+for name in dataset_names:
+    if name not in st.session_state.dataset_convo_counts:
+        try:
+            st.session_state.dataset_convo_counts[name] = len(load_conversations(name))
+        except Exception:
+            st.session_state.dataset_convo_counts[name] = 0
+
+# --- Prepare objects ---
+dataset_objs = [{"name": name, "num_conversations": st.session_state.dataset_convo_counts[name]} for name in dataset_names]
 dataset_objs.sort(key=lambda d: d["name"].lower())
 
 # --- Pagination ---
@@ -85,11 +98,14 @@ header_cols[1].markdown("**Convos**")
 header_cols[2].markdown("**Edit**")
 header_cols[3].markdown("**Delete**")
 
-# --- Rows ---
+# --- Dataset Rows ---
 for ds in visible_datasets:
     is_selected = ds["name"] == st.session_state.selected_dataset_name
     row_cols = st.columns([6, 2, 1, 1])
-    row_style = "background-color: rgba(0, 123, 255, 0.15); border-radius: 5px; padding: 4px;" if is_selected else ""
+    row_style = (
+        "background-color: rgba(0, 123, 255, 0.15); border-radius: 5px; padding: 4px;"
+        if is_selected else ""
+    )
 
     with row_cols[0]:
         if st.session_state.editing_dataset == ds["name"]:
@@ -129,7 +145,7 @@ for ds in visible_datasets:
         if st.button("🗑️", key=f"delete_{ds['name']}"):
             st.session_state.deleting_dataset = ds["name"]
 
-# --- Delete Confirmation Modal ---
+# --- Delete Confirmation ---
 if st.session_state.deleting_dataset:
     st.markdown("---")
     st.warning(f"Are you sure you want to delete **{st.session_state.deleting_dataset}**?")
@@ -142,6 +158,7 @@ if st.session_state.deleting_dataset:
                 if st.session_state.selected_dataset_name == st.session_state.deleting_dataset:
                     st.session_state.selected_dataset_name = None
                 st.session_state.deleting_dataset = None
+                st.session_state.dataset_convo_counts.clear()
                 st.rerun()
             except Exception as e:
                 st.error(f"Error deleting: {e}")
@@ -149,7 +166,7 @@ if st.session_state.deleting_dataset:
         if st.button("❌ Cancel Delete"):
             st.session_state.deleting_dataset = None
 
-# --- Clean Pagination Controls (Chat-style) ---
+# --- Pagination ---
 st.divider()
 pagination_cols = st.columns([2, 14, 2])
 with pagination_cols[0]:
@@ -165,6 +182,5 @@ with pagination_cols[2]:
 with pagination_cols[1]:
     st.markdown(
         f"<div style='text-align:center;'>Page {st.session_state.dataset_page} of {total_pages}</div>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-

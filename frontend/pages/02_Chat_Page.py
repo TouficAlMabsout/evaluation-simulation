@@ -88,10 +88,9 @@ MODEL_OPTIONS = {
     ]
 }
 
-# Fetch prompt list (from backend API)
 def fetch_prompt_list():
     try:
-        res = requests.get(f"{BACKEND_URL}/prompts")
+        res = requests.get(f"{BACKEND_URL}/prompts", params={"workspace": st.session_state.workspace})
         if res.status_code == 200:
             return res.json()
         return []
@@ -100,7 +99,10 @@ def fetch_prompt_list():
 
 def fetch_prompt_variables(prompt_id):
     try:
-        res = requests.get(f"{BACKEND_URL}/prompt-variables", params={"prompt_id": prompt_id})
+        res = requests.get(f"{BACKEND_URL}/prompt-variables", params={
+            "prompt_id": prompt_id,
+            "workspace": st.session_state.workspace
+        })
         if res.status_code == 200:
             return res.json().get("variables", [])
         return []
@@ -137,6 +139,14 @@ if st.button("← Back to Datasets"):
     st.session_state.user_filter = ""
     st.session_state.chat_id_filter = ""
     st.switch_page("01_Dataset_Page.py")
+
+
+# Workspace selection
+workspace_options = ["MaidsAT-Delighters-Doctors", "Resolvers", "Sales"]
+if "workspace" not in st.session_state:
+    st.session_state.workspace = workspace_options[0]
+
+st.session_state.workspace = st.selectbox("Select Workspace", workspace_options)
 
 # ✅ Prompt list fetch
 if not st.session_state.prompt_list:
@@ -207,7 +217,8 @@ if st.button("Simulate All"):
             data = {
                 "prompt_id": selected_prompt,
                 "model_name": selected_model,
-                "variables_json": json.dumps(dataset_variable_values)
+                "variables_json": json.dumps(dataset_variable_values),
+                "workspace": st.session_state.workspace
             }
             try:
                 res = requests.post(f"{BACKEND_URL}/simulate", files=files, data=data)
@@ -343,7 +354,8 @@ for convo in displayed:
                     data = {
                         "prompt_id": selected_prompt,
                         "model_name": selected_model,
-                        "variables_json": json.dumps(variable_values)
+                        "variables_json": json.dumps(variable_values),
+                        "workspace": st.session_state.workspace
                     }
 
                     res = requests.post(f"{BACKEND_URL}/simulate", files=files, data=data)

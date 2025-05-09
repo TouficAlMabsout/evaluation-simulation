@@ -10,9 +10,6 @@ from fastapi.responses import JSONResponse, Response
 
 load_dotenv()
 
-LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-
 app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,7 +27,8 @@ async def simulate(
     file: UploadFile = None,
     prompt_id: str = Form(...),
     model_name: str = Form(...),
-    variables_json: str = Form("{}", description="User-provided variables as JSON string")
+    variables_json: str = Form("{}", description="User-provided variables as JSON string"),
+    workspace: str = Form(...)
 ):
     if file is None:
         raise HTTPException(status_code=400, detail="No file uploaded. Please upload a chat JSON file.")
@@ -40,7 +38,15 @@ async def simulate(
         raise HTTPException(status_code=400, detail="Prompt ID is missing. Please enter a LangSmith prompt ID.")
     if model_name.strip() == "":
         raise HTTPException(status_code=400, detail="Model name is missing. Please select a model.")
-
+    key_mapping = {
+    "MaidsAT-Delighters-Doctors": "LANGSMITH_API_KEY_MAIDSAT",
+    "Resolvers": "LANGSMITH_API_KEY_RESOLVERS",
+    "Sales": "LANGSMITH_API_KEY_SALES"
+    }
+    selected_key = key_mapping.get(workspace)
+    api_key = os.getenv(selected_key)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Invalid workspace.")
     # Load uploaded JSON content
     try:
         content = await file.read()
@@ -69,7 +75,7 @@ async def simulate(
 
     # Simulate conversation
     try:
-        result = simulate_chat(chat, prompt_id, model_name, LANGSMITH_API_KEY, user_vars)
+        result = simulate_chat(chat, prompt_id, model_name, api_key, user_vars)
         return result
 
     except ValueError as e:
@@ -85,9 +91,19 @@ async def simulate(
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
     
 @app.get("/prompts")
-def list_prompts():
+def list_prompts(workspace: str = Query(...)):
+    key_mapping = {
+        "MaidsAT-Delighters-Doctors": "LANGSMITH_API_KEY_MAIDSAT",
+        "Resolvers": "LANGSMITH_API_KEY_RESOLVERS",
+        "Sales": "LANGSMITH_API_KEY_SALES"
+    }
+    selected_key = key_mapping.get(workspace)
+    api_key = os.getenv(selected_key)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Invalid workspace.")
+    
     try:
-        client = Client(api_key=LANGSMITH_API_KEY)
+        client = Client(api_key=api_key)
         offset = 0
         limit = 100
         prompt_names = []
@@ -119,9 +135,19 @@ async def root_head() -> Response:
     return Response(status_code=200)
 
 @app.get("/prompt-variables")
-def get_prompt_variables(prompt_id: str = Query(...)):
+def get_prompt_variables(prompt_id: str = Query(...),
+                          workspace: str = Query(...)):
+    key_mapping = {
+        "MaidsAT-Delighters-Doctors": "LANGSMITH_API_KEY_MAIDSAT",
+        "Resolvers": "LANGSMITH_API_KEY_RESOLVERS",
+        "Sales": "LANGSMITH_API_KEY_SALES"
+    }
+    selected_key = key_mapping.get(workspace)
+    api_key = os.getenv(selected_key)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Invalid workspace.")
     try:
-        client = Client(api_key=os.getenv("LANGSMITH_API_KEY"))
+        client = Client(api_key=api_key)
         prompt = client.pull_prompt(prompt_id)
 
         # Remove fields you handle internally

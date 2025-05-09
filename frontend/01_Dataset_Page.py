@@ -191,21 +191,18 @@ for ds in visible_datasets:
         if st.session_state.deleting_dataset == ds["name"]:
             st.markdown(
                 f"""
-                <style>
-                .del-bubble {{
+                <div style="
                     padding: 10px 16px;
                     border-radius: 10px;
                     margin: 8px 0 12px 0;
                     font-size: 0.95rem;
                     line-height: 1.4;
                     display: inline-block;
+                    background: rgba(0, 0, 0, 0.05);
                     border: 1px solid rgba(0, 0, 0, 0.2);
                     color: rgba(0, 0, 0, 0.8);
                     font-weight: 500;
-                }}
-                </style>
-
-                <div class="del-bubble">
+                ">
                     Delete&nbsp;<strong>{ds['name']}</strong>?
                 </div>
                 """,

@@ -192,24 +192,23 @@ for ds in visible_datasets:
             st.markdown(
                 f"""
                 <style>
+                /* default = dark-theme overlay (≈8 % white) */
                 .del-bubble {{
                     padding: 8px 14px;
                     border-radius: 8px;
                     margin: 6px 0 10px 0;
-                    font-size: 0.92rem;
+                    font-size: .92rem;
                     line-height: 1.35;
                     display: inline-block;
-
-                    /* default for dark mode ─ very light wash */
-                    background: rgba(255,255,255,0.10);   /* 10 % white */
-                    border: 1px solid rgba(255,255,255,0.12);
+                    background: rgba(255,255,255,.08);
+                    border: 1px solid rgba(255,255,255,.15);
                 }}
 
-                /* override for light mode – light grey wash */
+                /* override for LIGHT theme (≈6 % black) */
                 @media (prefers-color-scheme: light) {{
                     .del-bubble {{
-                    background: rgba(0,0,0,0.04);      /* 4 % black  */
-                    border: 1px solid rgba(0,0,0,0.08);
+                    background: rgba(0,0,0,.06);
+                    border: 1px solid rgba(0,0,0,.10);
                     }}
                 }}
                 </style>

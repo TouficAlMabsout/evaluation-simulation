@@ -200,7 +200,7 @@ for ds in visible_datasets:
                     font-size: .92rem;
                     line-height: 1.35;
                     display: inline-block;
-                    background: rgba(255,255,255,.08);
+                    background: rgba(255,255,255,.50);
                     border: 1px solid rgba(255,255,255,.15);
                 }}
 

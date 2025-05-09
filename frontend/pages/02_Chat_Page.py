@@ -89,6 +89,8 @@ MODEL_OPTIONS = {
 }
 
 def fetch_prompt_list():
+    if not st.session_state.workspace:
+        return []
     try:
         res = requests.get(f"{BACKEND_URL}/prompts", params={"workspace": st.session_state.workspace})
         if res.status_code == 200:
@@ -98,6 +100,8 @@ def fetch_prompt_list():
         return []
 
 def fetch_prompt_variables(prompt_id):
+    if not st.session_state.workspace:
+        return []
     try:
         res = requests.get(f"{BACKEND_URL}/prompt-variables", params={
             "prompt_id": prompt_id,
@@ -143,19 +147,18 @@ if st.button("← Back to Datasets"):
 if "prev_workspace" not in st.session_state:
     st.session_state.prev_workspace = None
 
-# Workspace selection
-workspace_options = ["MaidsAT-Delighters-Doctors", "Resolvers", "Sales"]
-if "workspace" not in st.session_state:
-    st.session_state.workspace = workspace_options[0]
+workspace_options = ["", "MaidsAT-Delighters-Doctors", "Resolvers", "Sales"]  # ← add empty option
+workspace_label = "Select Workspace (required)"
+selected_workspace = st.selectbox(workspace_label, workspace_options, key="workspace")
 
-new_workspace = st.selectbox("Select Workspace", workspace_options, index=workspace_options.index(st.session_state.workspace))
-if new_workspace != st.session_state.workspace:
-    st.session_state.workspace = new_workspace
-    st.session_state.prev_workspace = new_workspace
-    st.session_state.prompt_list = fetch_prompt_list()  # 🔁 refresh on change
+# React to workspace changes immediately
+if selected_workspace and selected_workspace != st.session_state.get("prev_workspace"):
+    st.session_state.prompt_list = fetch_prompt_list()
+    st.session_state.prev_workspace = selected_workspace
 
 if st.button("⟳ Refresh Conversations"):
     st.session_state.conversations = load_conversations(st.session_state.dataset_name)
+    st.session_state.workspace = ""
     st.success(f"Refreshed dataset: {st.session_state.dataset_name}")
 
 

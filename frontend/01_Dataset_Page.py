@@ -31,15 +31,15 @@ cols = st.columns([4, 2])
 with cols[0]:
     search_query = st.text_input("Search Datasets", placeholder="Type to search...", label_visibility="collapsed")
 with cols[1]:
-    if st.button("+ Create Dataset"):
-        st.session_state.creating_dataset = True
+    if st.button("➕ Create Dataset"):
+        st.session_state.creating_dataset = not st.session_state.creating_dataset
 
 # --- Create Dataset Modal ---
 if st.session_state.creating_dataset:
     with st.container():
         st.markdown("---")
         new_name = st.text_input("New Dataset Name")
-        create_cols = st.columns([1, 1])
+        create_cols = st.columns([2, 1, 2])
         with create_cols[0]:
             if st.button("✅ Create"):
                 try:
@@ -54,9 +54,10 @@ if st.session_state.creating_dataset:
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error creating dataset: {e}")
-        with create_cols[1]:
+        with create_cols[2]:
             if st.button("❌ Cancel"):
                 st.session_state.creating_dataset = False
+
 
 # --- Load & Filter ---
 dataset_names = load_dataset_names()

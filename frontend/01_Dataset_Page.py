@@ -160,9 +160,15 @@ for ds in visible_datasets:
             )
 
         else:
-            st.button(ds["name"], key=f"select_{ds['name']}", on_click=lambda n=ds["name"]: st.session_state.update({"selected_dataset_name": n}), args=(), kwargs={})
-            if row_style:
-                st.markdown(f"<div style='{row_style}'></div>", unsafe_allow_html=True)
+            st.button(
+                ds["name"], 
+                key=f"select_{ds['name']}", 
+                on_click=lambda n=ds["name"]: st.session_state.update({
+                    "selected_dataset_name": n,
+                    "switch_to_chat": True  # temp flag to trigger page switch
+                }),
+                args=(), kwargs={}
+            )
 
     with row_cols[1]:
         st.markdown(f"{ds['num_conversations']}")
@@ -226,6 +232,11 @@ for ds in visible_datasets:
                     key=f"cancel_delete_{ds['name']}",
                     on_click=lambda: st.session_state.update({"deleting_dataset": None})
                 )
+
+# 🔁 Trigger auto-switch to Chat Page if a dataset was just selected
+if st.session_state.get("switch_to_chat"):
+    st.session_state.switch_to_chat = False  # reset the flag
+    st.switch_page("02_Chat_Page.py")
 
 # --- Pagination ---
 st.divider()

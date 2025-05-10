@@ -40,6 +40,16 @@ try:
 except pytz.UnknownTimeZoneError:
     user_tz = pytz.timezone("Asia/Dubai")
 
+st.markdown("""
+    <style>
+    .stButton > button[kind="primary"] {
+        background-color: #28a745;
+        color: white;
+        font-weight: 600;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ✅ Force sync of selected dataset (and reset old conversations + filters if dataset changed)
 selected = st.session_state.get("selected_dataset_name")
 prev = st.session_state.get("dataset_name")
@@ -211,7 +221,7 @@ for var in prompt_vars:
     val = st.text_input(f"{var} (optional)", key=f"dataset_input_{var}")
     dataset_variable_values[var] = val if val.strip() else ""
 
-if st.button("Simulate All"):
+if st.button("Run All", key="run_all", type="primary"):
     if not st.session_state.workspace:
         st.warning("Please select a workspace before running simulation.")
     elif not selected_prompt:
@@ -351,7 +361,7 @@ for convo in displayed:
             val = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
             variable_values[var] = val if val.strip() else ""
 
-        if st.button("Run", key=f"run_{convo['conversation_id']}"):
+        if st.button("Run", key=f"run_{convo['conversation_id']}", type="primary"):
             if not st.session_state.workspace:
                 st.warning("Please select a workspace before running simulation.")
             elif not selected_prompt:

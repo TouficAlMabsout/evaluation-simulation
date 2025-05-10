@@ -170,6 +170,10 @@ workspace_options = ["", "MaidsAT-Delighters-Doctors", "Resolvers", "Sales"]  # 
 workspace_label = "Select Workspace (required)"
 selected_workspace = st.selectbox(workspace_label, workspace_options, key="workspace")
 
+# ⛔️ Show warning if no workspace and prompt list is empty (user sees empty prompt dropdown)
+if not st.session_state.workspace and not st.session_state.prompt_list:
+    st.info("Please select a workspace to load prompts.")
+
 # React to workspace changes immediately
 if selected_workspace and selected_workspace != st.session_state.get("prev_workspace"):
     st.session_state.prompt_list = fetch_prompt_list()

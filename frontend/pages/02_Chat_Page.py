@@ -375,7 +375,7 @@ for convo in displayed:
         prompt_vars = st.session_state.prompt_vars_cache.get(selected_prompt, [])
         for var in prompt_vars:
             val = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
-            dataset_variable_values[var] = val.strip() if val.strip() else f"@{var}@"
+            variable_values[var] = val.strip() if val.strip() else f"@{var}@"
 
         if st.button("Run", key=f"run_{convo['conversation_id']}", type="primary"):
             if not st.session_state.workspace:

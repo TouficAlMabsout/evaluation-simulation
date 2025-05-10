@@ -221,14 +221,18 @@ selected_family = st.selectbox("Select Model Family", list(MODEL_OPTIONS.keys())
 selected_submodel = st.selectbox("Select Submodel", MODEL_OPTIONS[selected_family], key="submodel")
 selected_model = f"{selected_family}:{selected_submodel}"
 
-if selected_prompt and selected_prompt not in st.session_state.prompt_vars_cache:
-    st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
+if selected_prompt:
+    if not st.session_state.workspace:
+        st.warning("Please select a workspace before selecting a prompt.")
+    elif selected_prompt not in st.session_state.prompt_vars_cache:
+        st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
 
 dataset_variable_values = {}
 prompt_vars = st.session_state.prompt_vars_cache.get(selected_prompt, [])
 for var in prompt_vars:
     val = st.text_input(f"{var} (optional)", key=f"dataset_input_{var}")
-    dataset_variable_values[var] = val if val.strip() else ""
+    dataset_variable_values[var] = val.strip() if val.strip() else f"@{var}@"
+
 
 if st.button("Run All", key="run_all", type="primary"):
     if not st.session_state.workspace:
@@ -361,14 +365,17 @@ for convo in displayed:
         selected_submodel = st.selectbox("Select Submodel", MODEL_OPTIONS[selected_family], key=submodel_key)
         selected_model = f"{selected_family}:{selected_submodel}"
 
-        if selected_prompt and selected_prompt not in st.session_state.prompt_vars_cache:
-            st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
+        if selected_prompt:
+            if not st.session_state.workspace:
+                st.warning("Please select a workspace before selecting a prompt.")
+            elif selected_prompt not in st.session_state.prompt_vars_cache:
+                st.session_state.prompt_vars_cache[selected_prompt] = fetch_prompt_variables(selected_prompt)
 
         variable_values = {}
         prompt_vars = st.session_state.prompt_vars_cache.get(selected_prompt, [])
         for var in prompt_vars:
             val = st.text_input(f"{var} (optional)", key=f"{convo['conversation_id']}_{var}")
-            variable_values[var] = val if val.strip() else ""
+            dataset_variable_values[var] = val.strip() if val.strip() else f"@{var}@"
 
         if st.button("Run", key=f"run_{convo['conversation_id']}", type="primary"):
             if not st.session_state.workspace:

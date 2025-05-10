@@ -46,6 +46,15 @@ st.markdown("""
         background-color: #28a745;
         color: white;
         font-weight: 600;
+        border: none;
+        box-shadow: none;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #218838;
+    }
+    .stButton > button[kind="primary"]:focus {
+        outline: none;
+        box-shadow: none;
     }
     </style>
 """, unsafe_allow_html=True)
